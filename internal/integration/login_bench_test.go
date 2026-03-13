@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"fmt"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -15,6 +16,70 @@ import (
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
 	_ "modernc.org/sqlite"
 )
+
+// ---------------------------------------------------------------------------
+// インメモリトークンストア（nz-magic-link #15 の想定シミュレーション）
+// ---------------------------------------------------------------------------
+
+type tokenEntry struct {
+	token     string
+	email     string
+	expiresAt time.Time
+	used      bool
+	createdAt time.Time
+}
+
+type memoryTokenStore struct {
+	mu     sync.RWMutex
+	tokens map[string]*tokenEntry // key: tokenHash
+}
+
+func newMemoryTokenStore() *memoryTokenStore {
+	return &memoryTokenStore{tokens: make(map[string]*tokenEntry)}
+}
+
+func (s *memoryTokenStore) saveToken(token, tokenHash, email string, expiresAt time.Time) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.tokens[tokenHash] = &tokenEntry{
+		token: token, email: email, expiresAt: expiresAt,
+		createdAt: time.Now(),
+	}
+}
+
+func (s *memoryTokenStore) getTokenByHash(tokenHash string) (string, string, time.Time, bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	e, ok := s.tokens[tokenHash]
+	if !ok {
+		return "", "", time.Time{}, false, nil
+	}
+	return e.token, e.email, e.expiresAt, e.used, nil
+}
+
+func (s *memoryTokenStore) markTokenAsUsed(tokenHash string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if e, ok := s.tokens[tokenHash]; ok {
+		e.used = true
+	}
+}
+
+func (s *memoryTokenStore) countRecentTokens(email string, since time.Time) int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	count := 0
+	for _, e := range s.tokens {
+		if e.email == email && e.createdAt.After(since) {
+			count++
+		}
+	}
+	return count
+}
+
+// ---------------------------------------------------------------------------
+// セットアップ
+// ---------------------------------------------------------------------------
 
 // setupBenchDB はベンチマーク用のファイル SQLite を作成する。
 // 本番と同じ WAL モード + busy_timeout を使う。
@@ -50,8 +115,8 @@ func setupBenchDB(b *testing.B) (*sql.DB, *database.Queries, *magiclink.MagicLin
 
 	// magiclink を公開 API で初期化（内部で Init() も呼ばれる）
 	ml, err := magiclink.NewWithDB(magiclink.Config{
-		DatabaseType: "sqlite",
-		TokenExpiry:  30 * time.Minute,
+		DatabaseType:  "sqlite",
+		TokenExpiry:   30 * time.Minute,
 		SessionExpiry: 24 * time.Hour,
 	}, conn)
 	if err != nil {
@@ -79,67 +144,159 @@ func generateToken() (string, string) {
 	return token, tokenHash
 }
 
+// ---------------------------------------------------------------------------
+// ストレージモード: DB 全操作 vs インメモリトークン + DB セッション
+// ---------------------------------------------------------------------------
+
+type storageMode int
+
+const (
+	modeAllDB         storageMode = iota // 従来: 全操作 DB
+	modeMemoryToken                      // 想定: トークンはメモリ、セッションは DB
+)
+
+func (m storageMode) String() string {
+	switch m {
+	case modeAllDB:
+		return "AllDB"
+	case modeMemoryToken:
+		return "MemoryToken"
+	default:
+		return "Unknown"
+	}
+}
+
+// loginOps はログインフロー（フェーズ1）の操作をまとめた構造体
+type loginOps struct {
+	mode  storageMode
+	q     *database.Queries
+	ml    *magiclink.MagicLink
+	mem   *memoryTokenStore
+}
+
+func (ops *loginOps) doLogin(ctx context.Context, email string, expires time.Time) error {
+	// Step 1: ユーザー存在確認（常に DB）
+	_, err := ops.q.GetUserByEmail(ctx, email)
+	if err != nil {
+		return fmt.Errorf("GetUserByEmail: %w", err)
+	}
+
+	// Step 2: レート制限チェック
+	switch ops.mode {
+	case modeAllDB:
+		_, err = ops.ml.DB.CountRecentTokens(email, time.Now().Add(-15*time.Minute))
+		if err != nil {
+			return fmt.Errorf("CountRecentTokens: %w", err)
+		}
+	case modeMemoryToken:
+		ops.mem.countRecentTokens(email, time.Now().Add(-15*time.Minute))
+	}
+
+	// Step 3: トークン保存
+	token, tokenHash := generateToken()
+	switch ops.mode {
+	case modeAllDB:
+		if err := ops.ml.DB.SaveToken(token, tokenHash, email, expires); err != nil {
+			return fmt.Errorf("SaveToken: %w", err)
+		}
+	case modeMemoryToken:
+		ops.mem.saveToken(token, tokenHash, email, expires)
+	}
+
+	return nil
+}
+
+// verifyOps はトークン検証フロー（フェーズ2）の操作をまとめた構造体
+type verifyOps struct {
+	mode storageMode
+	ml   *magiclink.MagicLink
+	mem  *memoryTokenStore
+}
+
+func (ops *verifyOps) doVerify(tokenHash, email string, expires time.Time) error {
+	// Step 4: トークン検証
+	switch ops.mode {
+	case modeAllDB:
+		_, _, _, _, err := ops.ml.DB.GetTokenByHash(tokenHash)
+		if err != nil {
+			return fmt.Errorf("GetTokenByHash: %w", err)
+		}
+	case modeMemoryToken:
+		_, _, _, _, err := ops.mem.getTokenByHash(tokenHash)
+		if err != nil {
+			return fmt.Errorf("getTokenByHash: %w", err)
+		}
+	}
+
+	// Step 5: 使用済みマーク
+	switch ops.mode {
+	case modeAllDB:
+		if err := ops.ml.DB.MarkTokenAsUsed(tokenHash); err != nil {
+			return fmt.Errorf("MarkTokenAsUsed: %w", err)
+		}
+	case modeMemoryToken:
+		ops.mem.markTokenAsUsed(tokenHash)
+	}
+
+	// Step 6: セッション作成（常に DB）
+	sessToken, sessHash := generateToken()
+	if err := ops.ml.DB.SaveSession(sessToken, sessHash, email, expires); err != nil {
+		return fmt.Errorf("SaveSession: %w", err)
+	}
+
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// ベンチマーク: ログインフロー（フェーズ1）
+// ---------------------------------------------------------------------------
+
 // BenchmarkLoginFlow_Sequential はログインフローの DB 操作を直列で実行する（ベースライン）
 func BenchmarkLoginFlow_Sequential(b *testing.B) {
 	_, q, ml := setupBenchDB(b)
-	ctx := context.Background()
-	email := "bench@test.com"
+	mem := newMemoryTokenStore()
 	expires := time.Now().Add(30 * time.Minute)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		// Step 1: AllowLogin — ユーザー存在確認
-		_, err := q.GetUserByEmail(ctx, email)
-		if err != nil {
-			b.Fatalf("GetUserByEmail に失敗: %v", err)
-		}
-
-		// Step 2: レート制限チェック
-		_, err = ml.DB.CountRecentTokens(email, time.Now().Add(-15*time.Minute))
-		if err != nil {
-			b.Fatalf("CountRecentTokens に失敗: %v", err)
-		}
-
-		// Step 3: トークン保存
-		token, tokenHash := generateToken()
-		err = ml.DB.SaveToken(token, tokenHash, email, expires)
-		if err != nil {
-			b.Fatalf("SaveToken に失敗: %v", err)
-		}
+	for _, mode := range []storageMode{modeAllDB, modeMemoryToken} {
+		ops := &loginOps{mode: mode, q: q, ml: ml, mem: mem}
+		b.Run(mode.String(), func(b *testing.B) {
+			ctx := context.Background()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				if err := ops.doLogin(ctx, "bench@test.com", expires); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
 	}
 }
 
 // BenchmarkLoginFlow_Parallel は並行ログインリクエストをシミュレートする
 func BenchmarkLoginFlow_Parallel(b *testing.B) {
 	_, q, ml := setupBenchDB(b)
-	email := "bench@test.com"
+	mem := newMemoryTokenStore()
 	expires := time.Now().Add(30 * time.Minute)
 
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		ctx := context.Background()
-		for pb.Next() {
-			_, err := q.GetUserByEmail(ctx, email)
-			if err != nil {
-				b.Errorf("GetUserByEmail に失敗: %v", err)
-				return
-			}
-
-			_, err = ml.DB.CountRecentTokens(email, time.Now().Add(-15*time.Minute))
-			if err != nil {
-				b.Errorf("CountRecentTokens に失敗: %v", err)
-				return
-			}
-
-			token, tokenHash := generateToken()
-			err = ml.DB.SaveToken(token, tokenHash, email, expires)
-			if err != nil {
-				b.Errorf("SaveToken に失敗: %v", err)
-				return
-			}
-		}
-	})
+	for _, mode := range []storageMode{modeAllDB, modeMemoryToken} {
+		ops := &loginOps{mode: mode, q: q, ml: ml, mem: mem}
+		b.Run(mode.String(), func(b *testing.B) {
+			b.ResetTimer()
+			b.RunParallel(func(pb *testing.PB) {
+				ctx := context.Background()
+				for pb.Next() {
+					if err := ops.doLogin(ctx, "bench@test.com", expires); err != nil {
+						b.Error(err)
+						return
+					}
+				}
+			})
+		})
+	}
 }
+
+// ---------------------------------------------------------------------------
+// ベンチマーク: 検証フロー（フェーズ2）
+// ---------------------------------------------------------------------------
 
 // BenchmarkVerifyFlow_Parallel はトークン検証+セッション作成の並行負荷をテストする
 func BenchmarkVerifyFlow_Parallel(b *testing.B) {
@@ -147,63 +304,64 @@ func BenchmarkVerifyFlow_Parallel(b *testing.B) {
 	email := "bench@test.com"
 	expires := time.Now().Add(30 * time.Minute)
 
-	// 事前にトークンを大量に作成
-	tokenHashes := make([]string, b.N)
-	for i := 0; i < b.N; i++ {
-		token, tokenHash := generateToken()
-		if err := ml.DB.SaveToken(token, tokenHash, email, expires); err != nil {
-			b.Fatalf("事前トークン作成に失敗: %v", err)
-		}
-		tokenHashes[i] = tokenHash
-	}
+	for _, mode := range []storageMode{modeAllDB, modeMemoryToken} {
+		b.Run(mode.String(), func(b *testing.B) {
+			mem := newMemoryTokenStore()
 
-	var idx atomic.Int64
-
-	b.ResetTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			i := idx.Add(1) - 1
-			if i >= int64(len(tokenHashes)) {
-				return
-			}
-			tokenHash := tokenHashes[i]
-
-			// Step 4: トークン検証
-			_, _, _, _, err := ml.DB.GetTokenByHash(tokenHash)
-			if err != nil {
-				b.Errorf("GetTokenByHash に失敗: %v", err)
-				return
+			// 事前にトークンを大量に作成
+			tokenHashes := make([]string, b.N)
+			for i := 0; i < b.N; i++ {
+				token, tokenHash := generateToken()
+				switch mode {
+				case modeAllDB:
+					if err := ml.DB.SaveToken(token, tokenHash, email, expires); err != nil {
+						b.Fatalf("事前トークン作成に失敗: %v", err)
+					}
+				case modeMemoryToken:
+					mem.saveToken(token, tokenHash, email, expires)
+				}
+				tokenHashes[i] = tokenHash
 			}
 
-			// Step 5: 使用済みマーク
-			err = ml.DB.MarkTokenAsUsed(tokenHash)
-			if err != nil {
-				b.Errorf("MarkTokenAsUsed に失敗: %v", err)
-				return
-			}
+			ops := &verifyOps{mode: mode, ml: ml, mem: mem}
+			var idx atomic.Int64
 
-			// Step 6: セッション作成
-			sessToken, sessHash := generateToken()
-			err = ml.DB.SaveSession(sessToken, sessHash, email, expires)
-			if err != nil {
-				b.Errorf("SaveSession に失敗: %v", err)
-				return
-			}
-		}
-	})
-}
-
-// BenchmarkBurst は N 件の同時ログインリクエストをシミュレートする
-func BenchmarkBurst(b *testing.B) {
-	for _, n := range []int{100, 500, 1000} {
-		b.Run(fmt.Sprintf("concurrent_%d", n), func(b *testing.B) {
-			benchBurst(b, n)
+			b.ResetTimer()
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					i := idx.Add(1) - 1
+					if i >= int64(len(tokenHashes)) {
+						return
+					}
+					if err := ops.doVerify(tokenHashes[i], email, expires); err != nil {
+						b.Error(err)
+						return
+					}
+				}
+			})
 		})
 	}
 }
 
-func benchBurst(b *testing.B, concurrency int) {
+// ---------------------------------------------------------------------------
+// ベンチマーク: バーストテスト（フェーズ1 の同時リクエスト）
+// ---------------------------------------------------------------------------
+
+// BenchmarkBurst は N 件の同時ログインリクエストをシミュレートする
+func BenchmarkBurst(b *testing.B) {
+	for _, mode := range []storageMode{modeAllDB, modeMemoryToken} {
+		for _, n := range []int{100, 500, 1000} {
+			name := fmt.Sprintf("%s/concurrent_%d", mode, n)
+			b.Run(name, func(b *testing.B) {
+				benchBurst(b, mode, n)
+			})
+		}
+	}
+}
+
+func benchBurst(b *testing.B, mode storageMode, concurrency int) {
 	_, q, ml := setupBenchDB(b)
+	mem := newMemoryTokenStore()
 
 	// ユーザーを事前作成
 	ctx := context.Background()
@@ -219,6 +377,7 @@ func benchBurst(b *testing.B, concurrency int) {
 		}
 	}
 
+	ops := &loginOps{mode: mode, q: q, ml: ml, mem: mem}
 	expires := time.Now().Add(30 * time.Minute)
 
 	b.ResetTimer()
@@ -228,29 +387,7 @@ func benchBurst(b *testing.B, concurrency int) {
 		for i := 1; i <= concurrency; i++ {
 			go func(userIdx int) {
 				email := fmt.Sprintf("user%d@test.com", userIdx)
-				ctx := context.Background()
-
-				// ログインフロー全体
-				_, err := q.GetUserByEmail(ctx, email)
-				if err != nil {
-					errCh <- fmt.Errorf("user%d GetUserByEmail: %w", userIdx, err)
-					return
-				}
-
-				_, err = ml.DB.CountRecentTokens(email, time.Now().Add(-15*time.Minute))
-				if err != nil {
-					errCh <- fmt.Errorf("user%d CountRecentTokens: %w", userIdx, err)
-					return
-				}
-
-				token, tokenHash := generateToken()
-				err = ml.DB.SaveToken(token, tokenHash, email, expires)
-				if err != nil {
-					errCh <- fmt.Errorf("user%d SaveToken: %w", userIdx, err)
-					return
-				}
-
-				errCh <- nil
+				errCh <- ops.doLogin(context.Background(), email, expires)
 			}(i)
 		}
 
@@ -265,6 +402,7 @@ func benchBurst(b *testing.B, concurrency int) {
 			}
 		}
 		elapsed := time.Since(start)
-		b.Logf("同時 %d 件: %d 件成功, %d 件失敗, 所要時間 %v", concurrency, concurrency-failed, failed, elapsed)
+		b.Logf("[%s] 同時 %d 件: %d 件成功, %d 件失敗, 所要時間 %v",
+			mode, concurrency, concurrency-failed, failed, elapsed)
 	}
 }
