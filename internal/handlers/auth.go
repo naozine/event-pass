@@ -7,7 +7,6 @@ import (
 	"github.com/naozine/nz-magic-link/magiclink"
 
 	"github.com/naozine/project_crud_with_auth_tmpl/web/components"
-	"github.com/naozine/project_crud_with_auth_tmpl/web/layouts"
 )
 
 type AuthHandler struct {
@@ -35,10 +34,5 @@ func (h *AuthHandler) LoginPage(c echo.Context) error {
 		errorMessage = "無効なログインリンクです。"
 	}
 
-	content := components.LoginForm(errorMessage)
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-	if c.Request().Header.Get("HX-Request") == "true" {
-		return content.Render(c.Request().Context(), c.Response().Writer)
-	}
-	return layouts.Base("ログイン", content).Render(c.Request().Context(), c.Response().Writer)
+	return renderPage(c, "ログイン", components.LoginForm(errorMessage))
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/logger"
 	"github.com/naozine/project_crud_with_auth_tmpl/web/components"
-	"github.com/naozine/project_crud_with_auth_tmpl/web/layouts"
 )
 
 type ProfileHandler struct {
@@ -36,12 +35,7 @@ func (h *ProfileHandler) ShowProfile(c echo.Context) error {
 	// Context has it, but let's trust context middleware which runs on every request.
 	// Actually, context passkey check is basic.
 
-	content := components.Profile(user, hasPasskey)
-
-	if c.Request().Header.Get("HX-Request") == "true" {
-		return content.Render(ctx, c.Response().Writer)
-	}
-	return layouts.Base("マイページ", content).Render(ctx, c.Response().Writer)
+	return renderPage(c, "マイページ", components.Profile(user, hasPasskey))
 }
 
 func (h *ProfileHandler) UpdateProfile(c echo.Context) error {

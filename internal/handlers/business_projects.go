@@ -8,7 +8,6 @@ import (
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/appcontext"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
 	"github.com/naozine/project_crud_with_auth_tmpl/web/components"
-	"github.com/naozine/project_crud_with_auth_tmpl/web/layouts"
 
 	"github.com/labstack/echo/v4"
 )
@@ -36,25 +35,14 @@ func (h *ProjectHandler) ListProjects(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err)
 	}
-	content := components.ProjectList(projects)
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-	if c.Request().Header.Get("HX-Request") == "true" {
-		return content.Render(ctx, c.Response().Writer)
-	}
-	return layouts.Base("プロジェクト一覧", content).Render(ctx, c.Response().Writer)
+	return renderPage(c, "プロジェクト一覧", components.ProjectList(projects))
 }
 
 func (h *ProjectHandler) NewProjectPage(c echo.Context) error {
 	if err := h.checkPermission(c); err != nil {
 		return err
 	}
-	ctx := c.Request().Context()
-	content := components.ProjectForm()
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-	if c.Request().Header.Get("HX-Request") == "true" {
-		return content.Render(ctx, c.Response().Writer)
-	}
-	return layouts.Base("新規プロジェクト作成", content).Render(ctx, c.Response().Writer)
+	return renderPage(c, "新規プロジェクト作成", components.ProjectForm())
 }
 
 func (h *ProjectHandler) CreateProject(c echo.Context) error {
@@ -82,12 +70,7 @@ func (h *ProjectHandler) ShowProject(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Project not found")
 	}
 
-	content := components.ProjectDetail(project)
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-	if c.Request().Header.Get("HX-Request") == "true" {
-		return content.Render(ctx, c.Response().Writer)
-	}
-	return layouts.Base(project.Name, content).Render(ctx, c.Response().Writer)
+	return renderPage(c, project.Name, components.ProjectDetail(project))
 }
 
 func (h *ProjectHandler) EditProjectPage(c echo.Context) error {
@@ -105,12 +88,7 @@ func (h *ProjectHandler) EditProjectPage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Project not found")
 	}
 
-	content := components.ProjectEdit(project)
-	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTML)
-	if c.Request().Header.Get("HX-Request") == "true" {
-		return content.Render(ctx, c.Response().Writer)
-	}
-	return layouts.Base("編集: "+project.Name, content).Render(ctx, c.Response().Writer)
+	return renderPage(c, "編集: "+project.Name, components.ProjectEdit(project))
 }
 
 func (h *ProjectHandler) UpdateProject(c echo.Context) error {

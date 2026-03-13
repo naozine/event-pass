@@ -10,7 +10,6 @@ import (
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/logger"
 	"github.com/naozine/project_crud_with_auth_tmpl/web/components"
-	"github.com/naozine/project_crud_with_auth_tmpl/web/layouts"
 )
 
 type AdminHandler struct {
@@ -41,14 +40,7 @@ func (h *AdminHandler) ListUsers(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to list users")
 	}
 
-	content := components.UserList(users)
-
-	// If HTMX request, render just the content part
-	if c.Request().Header.Get("HX-Request") == "true" {
-		return content.Render(c.Request().Context(), c.Response().Writer)
-	}
-
-	return layouts.Base("ユーザー管理", content).Render(c.Request().Context(), c.Response().Writer)
+	return renderPage(c, "ユーザー管理", components.UserList(users))
 }
 
 func (h *AdminHandler) NewUserPage(c echo.Context) error {
