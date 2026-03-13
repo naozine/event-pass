@@ -23,32 +23,21 @@ templ Profile(user database.User, hasPasskey bool) {
                     <div class="px-4 py-6 sm:p-8">
                         <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                             <div class="sm:col-span-4">
-                                <label for="name" class="block text-sm font-medium leading-6 text-gray-900">名前</label>
-                                <div class="mt-2">
-                                    <input type="text" name="name" id="name" value={ user.Name } required class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"/>
-                                </div>
+                                @FormField("名前", "") {
+                                    @TextInput("name", user.Name, "")
+                                }
                             </div>
 
                             <div class="sm:col-span-4">
-                                <label class="block text-sm font-medium leading-6 text-gray-900">メールアドレス</label>
-                                <div class="mt-2">
-                                    <input type="email" disabled value={ user.Email } class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 sm:text-sm sm:leading-6"/>
-                                </div>
+                                @FormField("メールアドレス", "") {
+                                    @ReadOnlyField(user.Email)
+                                }
                             </div>
-                            
+
                             <div class="sm:col-span-4">
-                                <label class="block text-sm font-medium leading-6 text-gray-900">ロール</label>
-                                <div class="mt-2">
-                                    <div class="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 sm:text-sm sm:leading-6">
-                                        if user.Role == "admin" {
-                                            <span>管理者 (Admin)</span>
-                                        } else if user.Role == "editor" {
-                                            <span>編集者 (Editor)</span>
-                                        } else {
-                                            <span>閲覧者 (Viewer)</span>
-                                        }
-                                    </div>
-                                </div>
+                                @FormField("ロール", "") {
+                                    @ReadOnlyRoleField(user.Role)
+                                }
                             </div>
                         </div>
                     </div>
