@@ -17,6 +17,7 @@ import (
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/handlers"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/logger"
 	appMiddleware "github.com/naozine/project_crud_with_auth_tmpl/internal/middleware"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/routes"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/version"
 
 	"github.com/joho/godotenv"
@@ -150,9 +151,7 @@ func main() {
 
 	// 3. Initialize Handlers
 	queries := database.New(conn)
-	// projectHandler := handlers.NewProjectHandler(queries) // Moved to RegisterBusinessRoutes
 	authHandler := handlers.NewAuthHandler(ml)
-	adminHandler := handlers.NewAdminHandler(queries)
 	profileHandler := handlers.NewProfileHandler(queries, ml)
 	setupHandler := handlers.NewSetupHandler(queries, ml)
 
@@ -182,20 +181,10 @@ func main() {
 	// MagicLink internal handlers
 	ml.RegisterHandlers(e)
 
-	// Register Business Logic Routes (e.g., projects)
-	RegisterBusinessRoutes(e, queries, ml)
-
-	// Admin Routes
-	adminGroup := e.Group("/admin")
-	adminGroup.Use(appMiddleware.RequireAuth(ml, "/auth/login")) // 未認証時はログインページへリダイレクト
-	adminGroup.Use(appMiddleware.RequireRole("admin"))
-
-	adminGroup.GET("/users", adminHandler.ListUsers)
-	adminGroup.GET("/users/new", adminHandler.NewUserPage)
-	adminGroup.POST("/users", adminHandler.CreateUser)
-	adminGroup.GET("/users/:id/edit", adminHandler.EditUserPage)
-	adminGroup.POST("/users/:id", adminHandler.UpdateUser)
-	adminGroup.DELETE("/users/:id", adminHandler.DeleteUser)
+	// Register Business Logic Routes
+	authMW := appMiddleware.RequireAuth(ml, "/auth/login")
+	routes.RegisterBusinessRoutes(e, queries, authMW)
+	routes.RegisterAdminRoutes(e, queries, authMW)
 
 	// Profile Routes
 	e.GET("/profile", profileHandler.ShowProfile, appMiddleware.RequireAuth(ml, "/auth/login"))

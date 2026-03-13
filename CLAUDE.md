@@ -11,16 +11,18 @@ Your modifications should primarily occur within the Business Logic components t
 These are the foundational parts of the template. Avoid changing these files.
 -   **Entry Point:** `cmd/server/main.go`
 -   **Core Database Definitions:** `db/schema.sql`, `db/query.sql` (Contains only foundational tables like `users`)
--   **Core Handlers:** `internal/handlers/auth.go`, `admin.go`, `profile.go`, `health.go`
+-   **Core Handlers:** `internal/handlers/auth.go`, `admin.go`, `profile.go`, `health.go`, `render.go`
+-   **Core Routes:** `internal/routes/admin.go`
 -   **Core Utilities:** `internal/appcontext/`, `internal/middleware/`, `internal/version/`
 -   **Core Layouts:** `web/layouts/base.templ`
 
 ## Business Logic Components (Your Primary Development Area)
 These files are provided as a starting point (or sample implementation) for your application's specific features. This is where you should implement your custom business logic. You are free to modify, rename, or replace these files.
 
--   **Application Configuration & Routing:** `cmd/server/routes_business.go`
-    -   Modify `ConfigureBusinessSettings` to set your app's name and redirect URLs.
+-   **Business Routing:** `internal/routes/business.go`
     -   Implement your application's specific routes within `RegisterBusinessRoutes`.
+-   **Application Configuration:** `cmd/server/routes_business.go`
+    -   Modify `ConfigureBusinessSettings` to set your app's name and redirect URLs.
 -   **Business Database Definitions:** `db/schema_business.sql`, `db/query_business.sql`
     -   Define your application's tables and SQL queries here.
 -   **Business Handlers:** `internal/handlers/business_*.go`

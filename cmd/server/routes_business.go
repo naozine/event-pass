@@ -1,12 +1,8 @@
 package main
 
 import (
-	"github.com/labstack/echo/v4"
 	"github.com/naozine/nz-magic-link/magiclink"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/appconfig"
-	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
-	"github.com/naozine/project_crud_with_auth_tmpl/internal/handlers"
-	appMiddleware "github.com/naozine/project_crud_with_auth_tmpl/internal/middleware"
 )
 
 // ConfigureBusinessSettings allows customization of MagicLink config and App Name
@@ -16,31 +12,4 @@ func ConfigureBusinessSettings(config *magiclink.Config) {
 
 	// Set Application Name
 	appconfig.AppName = "プロジェクト管理"
-}
-
-// RegisterBusinessRoutes registers routes for business logic features
-
-func RegisterBusinessRoutes(e *echo.Echo, queries *database.Queries, ml *magiclink.MagicLink) {
-	// Handlers for business logic
-	projectHandler := handlers.NewProjectHandler(queries) // Note: This is now business_projects.go
-	// This handler name is generic, but actually points to the business logic handler.
-	// This allows project_crud_with_auth_tmpl to act as a sample for business logic.
-
-	// Protected Routes (Business Logic - projects)
-	projectGroup := e.Group("/projects")
-	projectGroup.Use(appMiddleware.RequireAuth(ml, "/auth/login")) // 未認証時はログインページへリダイレクト
-
-	// 読み取り — 認証済みユーザー全員
-	projectGroup.GET("", projectHandler.ListProjects)
-	projectGroup.GET("/:id", projectHandler.ShowProject)
-
-	// 書き込み — admin または editor のみ
-	requireWrite := appMiddleware.RequireRole("admin", "editor")
-	projectGroup.GET("/new", projectHandler.NewProjectPage, requireWrite)
-	projectGroup.POST("/new", projectHandler.CreateProject, requireWrite)
-	projectGroup.GET("/:id/edit", projectHandler.EditProjectPage, requireWrite)
-	projectGroup.POST("/:id/update", projectHandler.UpdateProject, requireWrite)
-	projectGroup.POST("/:id/delete", projectHandler.DeleteProject, requireWrite)
-
-	// Other business logic routes can be added here in derived projects
 }
