@@ -12,16 +12,16 @@ import (
 )
 
 type ProjectHandler struct {
-	DB *database.Queries
+	Queries *database.Queries
 }
 
-func NewProjectHandler(db *database.Queries) *ProjectHandler {
-	return &ProjectHandler{DB: db}
+func NewProjectHandler(queries *database.Queries) *ProjectHandler {
+	return &ProjectHandler{Queries: queries}
 }
 
 func (h *ProjectHandler) ListProjects(c echo.Context) error {
 	ctx := c.Request().Context()
-	projects, err := h.DB.ListProjects(ctx)
+	projects, err := h.Queries.ListProjects(ctx)
 	if err != nil {
 		logger.Error("プロジェクト一覧の取得に失敗", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "プロジェクト一覧の取得に失敗しました")
@@ -36,7 +36,7 @@ func (h *ProjectHandler) NewProjectPage(c echo.Context) error {
 func (h *ProjectHandler) CreateProject(c echo.Context) error {
 	ctx := c.Request().Context()
 	name := c.FormValue("name")
-	_, err := h.DB.CreateProject(ctx, name)
+	_, err := h.Queries.CreateProject(ctx, name)
 	if err != nil {
 		logger.Error("プロジェクト作成に失敗", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "プロジェクトの作成に失敗しました")
@@ -51,7 +51,7 @@ func (h *ProjectHandler) ShowProject(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
-	project, err := h.DB.GetProject(ctx, int64(id))
+	project, err := h.Queries.GetProject(ctx, int64(id))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "プロジェクトが見つかりません")
 	}
@@ -66,7 +66,7 @@ func (h *ProjectHandler) EditProjectPage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
-	project, err := h.DB.GetProject(ctx, int64(id))
+	project, err := h.Queries.GetProject(ctx, int64(id))
 	if err != nil {
 		return echo.NewHTTPError(http.StatusNotFound, "プロジェクトが見つかりません")
 	}
@@ -82,7 +82,7 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 	}
 
 	name := c.FormValue("name")
-	_, err = h.DB.UpdateProject(ctx, database.UpdateProjectParams{
+	_, err = h.Queries.UpdateProject(ctx, database.UpdateProjectParams{
 		Name: name,
 		ID:   int64(id),
 	})
@@ -101,7 +101,7 @@ func (h *ProjectHandler) DeleteProject(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
-	err = h.DB.DeleteProject(ctx, int64(id))
+	err = h.Queries.DeleteProject(ctx, int64(id))
 	if err != nil {
 		logger.Error("プロジェクト削除に失敗", "error", err, "id", id)
 		return echo.NewHTTPError(http.StatusInternalServerError, "プロジェクトの削除に失敗しました")
