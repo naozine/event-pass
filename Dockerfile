@@ -40,7 +40,16 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime
 # -----------------------------------------------------------------------------
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM alpine:3.21
+
+# シェルやメンテナンスコマンドが使える軽量ランタイム
+# ca-certificates: HTTPS通信（SMTP TLS等）に必要
+# tzdata: タイムゾーン処理に必要
+RUN apk add --no-cache ca-certificates tzdata
+
+# nonroot ユーザーで実行
+RUN adduser -D -u 10001 appuser
+USER appuser
 
 WORKDIR /app
 
