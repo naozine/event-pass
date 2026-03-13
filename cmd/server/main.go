@@ -189,7 +189,7 @@ func main() {
 	// Profile Routes
 	e.GET("/profile", profileHandler.ShowProfile, appMiddleware.RequireAuth(ml, "/auth/login"))
 	e.POST("/profile", profileHandler.UpdateProfile, appMiddleware.RequireAuth(ml, "/auth/login"))
-	e.DELETE("/profile/passkeys", profileHandler.DeletePasskeys, appMiddleware.RequireAuth(ml, "/auth/login"))
+	e.POST("/profile/passkeys/delete", profileHandler.DeletePasskeys, appMiddleware.RequireAuth(ml, "/auth/login"))
 
 	// Start server
 	port := os.Getenv("PORT")

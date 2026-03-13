@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
-	"github.com/naozine/project_crud_with_auth_tmpl/web/components"
-
 	"github.com/labstack/echo/v4"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/logger"
+	"github.com/naozine/project_crud_with_auth_tmpl/web/components"
 )
 
 type ProjectHandler struct {
@@ -23,7 +23,8 @@ func (h *ProjectHandler) ListProjects(c echo.Context) error {
 	ctx := c.Request().Context()
 	projects, err := h.DB.ListProjects(ctx)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		logger.Error("プロジェクト一覧の取得に失敗", "error", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "プロジェクト一覧の取得に失敗しました")
 	}
 	return renderPage(c, "プロジェクト一覧", components.ProjectList(projects))
 }
@@ -37,7 +38,8 @@ func (h *ProjectHandler) CreateProject(c echo.Context) error {
 	name := c.FormValue("name")
 	_, err := h.DB.CreateProject(ctx, name)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		logger.Error("プロジェクト作成に失敗", "error", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "プロジェクトの作成に失敗しました")
 	}
 	return c.Redirect(http.StatusSeeOther, "/projects")
 }
@@ -46,12 +48,12 @@ func (h *ProjectHandler) ShowProject(c echo.Context) error {
 	ctx := c.Request().Context()
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
 	project, err := h.DB.GetProject(ctx, int64(id))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Project not found")
+		return echo.NewHTTPError(http.StatusNotFound, "プロジェクトが見つかりません")
 	}
 
 	return renderPage(c, project.Name, components.ProjectDetail(project))
@@ -61,12 +63,12 @@ func (h *ProjectHandler) EditProjectPage(c echo.Context) error {
 	ctx := c.Request().Context()
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
 	project, err := h.DB.GetProject(ctx, int64(id))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "Project not found")
+		return echo.NewHTTPError(http.StatusNotFound, "プロジェクトが見つかりません")
 	}
 
 	return renderPage(c, "編集: "+project.Name, components.ProjectEdit(project))
@@ -76,7 +78,7 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 	ctx := c.Request().Context()
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
 	name := c.FormValue("name")
@@ -85,7 +87,8 @@ func (h *ProjectHandler) UpdateProject(c echo.Context) error {
 		ID:   int64(id),
 	})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		logger.Error("プロジェクト更新に失敗", "error", err, "id", id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "プロジェクトの更新に失敗しました")
 	}
 
 	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/projects/%d", id))
@@ -95,12 +98,13 @@ func (h *ProjectHandler) DeleteProject(c echo.Context) error {
 	ctx := c.Request().Context()
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Invalid ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
 	err = h.DB.DeleteProject(ctx, int64(id))
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err)
+		logger.Error("プロジェクト削除に失敗", "error", err, "id", id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "プロジェクトの削除に失敗しました")
 	}
 
 	return c.Redirect(http.StatusSeeOther, "/projects")

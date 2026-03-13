@@ -36,7 +36,7 @@ func (h *SetupHandler) SetupPage(c echo.Context) error {
 	hasUsers, err := h.hasUsers(c)
 	if err != nil {
 		logger.Error("Failed to count users", "error", err)
-		return echo.NewHTTPError(http.StatusInternalServerError, "Database error")
+		return echo.NewHTTPError(http.StatusInternalServerError, "データベースエラーが発生しました")
 	}
 
 	if hasUsers {

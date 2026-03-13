@@ -25,15 +25,10 @@ func (h *ProfileHandler) ShowProfile(c echo.Context) error {
 
 	email, _, hasPasskey := appcontext.GetUser(ctx)
 
-	// We need full user object for the form
 	user, err := h.Queries.GetUserByEmail(ctx, email)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+		return echo.NewHTTPError(http.StatusNotFound, "ユーザーが見つかりません")
 	}
-
-	// Check passkey status again from DB to be sure?
-	// Context has it, but let's trust context middleware which runs on every request.
-	// Actually, context passkey check is basic.
 
 	return renderPage(c, "マイページ", components.Profile(user, hasPasskey))
 }
@@ -42,31 +37,27 @@ func (h *ProfileHandler) UpdateProfile(c echo.Context) error {
 	ctx := c.Request().Context()
 	email, _, _ := appcontext.GetUser(ctx)
 
-	// Fetch current user to get ID and other fields we aren't changing (Role, IsActive)
 	currentUser, err := h.Queries.GetUserByEmail(ctx, email)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, "User not found")
+		return echo.NewHTTPError(http.StatusNotFound, "ユーザーが見つかりません")
 	}
 
 	newName := c.FormValue("name")
 	if newName == "" {
-		return c.String(http.StatusBadRequest, "Name is required")
+		return echo.NewHTTPError(http.StatusBadRequest, "名前は必須です")
 	}
 
 	_, err = h.Queries.UpdateUser(ctx, database.UpdateUserParams{
 		Name:     newName,
-		Role:     currentUser.Role,     // Keep existing role
-		IsActive: currentUser.IsActive, // Keep existing status
+		Role:     currentUser.Role,
+		IsActive: currentUser.IsActive,
 		ID:       currentUser.ID,
 	})
-
 	if err != nil {
-		logger.Error("Failed to update profile", "error", err, "email", email)
-		return c.String(http.StatusInternalServerError, "Failed to update profile")
+		logger.Error("プロフィール更新に失敗", "error", err, "email", email)
+		return echo.NewHTTPError(http.StatusInternalServerError, "プロフィールの更新に失敗しました")
 	}
 
-	// Reload the page to show updated info
-	// Or redirect to /profile
 	return c.Redirect(http.StatusSeeOther, "/profile")
 }
 
@@ -74,22 +65,17 @@ func (h *ProfileHandler) DeletePasskeys(c echo.Context) error {
 	ctx := c.Request().Context()
 	email, _, _ := appcontext.GetUser(ctx)
 
-	// Get all credentials for the user
 	creds, err := h.ML.DB.GetPasskeyCredentialsByUserID(email)
 	if err != nil {
-		logger.Error("Failed to get passkeys", "error", err, "email", email)
-		return c.String(http.StatusInternalServerError, "Failed to get passkeys")
+		logger.Error("パスキーの取得に失敗", "error", err, "email", email)
+		return echo.NewHTTPError(http.StatusInternalServerError, "パスキーの取得に失敗しました")
 	}
 
-	// Delete each credential
 	for _, cred := range creds {
 		if err := h.ML.DB.DeletePasskeyCredential(cred.ID); err != nil {
-			logger.Error("Failed to delete passkey", "error", err, "credentialID", cred.ID)
-			// Continue deleting others even if one fails
+			logger.Error("パスキーの削除に失敗", "error", err, "credentialID", cred.ID)
 		}
 	}
 
-	// Use HX-Redirect to force full page reload
-	c.Response().Header().Set("HX-Redirect", "/profile")
-	return c.NoContent(http.StatusOK)
+	return c.Redirect(http.StatusSeeOther, "/profile")
 }
