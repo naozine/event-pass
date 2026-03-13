@@ -7,10 +7,7 @@ import (
 
 templ AdminUserEdit(user database.User) {
     <div class="max-w-xl mx-auto">
-        <div class="mb-8">
-            <h3 class="text-2xl font-bold tracking-tight text-gray-900">ユーザー編集</h3>
-            <p class="mt-2 text-sm text-gray-500">{ user.Name } さんの情報を更新します。</p>
-        </div>
+        @PageHeader("ユーザー編集", user.Name + " さんの情報を更新します。")
 
         <form action={ templ.URL(fmt.Sprintf("/admin/users/%d/update", user.ID)) } method="POST" class="space-y-6">
             @FormField("名前", "") {

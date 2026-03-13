@@ -7,10 +7,7 @@ import (
 
 templ ProjectEdit(project database.Project) {
     <div class="max-w-xl mx-auto">
-        <div class="mb-8">
-            <h3 class="text-2xl font-bold tracking-tight text-gray-900">プロジェクト編集</h3>
-            <p class="mt-2 text-sm text-gray-500">プロジェクトの内容を更新します。</p>
-        </div>
+        @PageHeader("プロジェクト編集", "プロジェクトの内容を更新します。")
 
         <form action={ templ.URL(fmt.Sprintf("/projects/%d/update", project.ID)) } method="POST" class="space-y-6">
             @FormField("プロジェクト名", "") {

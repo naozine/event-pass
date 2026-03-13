@@ -6,10 +6,7 @@ import (
 
 templ Profile(user database.User, hasPasskey bool) {
     <div class="max-w-2xl mx-auto">
-        <div class="mb-8">
-            <h2 class="text-2xl font-bold tracking-tight text-gray-900">マイページ</h2>
-            <p class="mt-2 text-sm text-gray-500">アカウント情報の確認と編集ができます。</p>
-        </div>
+        @PageHeader("マイページ", "アカウント情報の確認と編集ができます。")
 
         <div class="space-y-10 divide-y divide-gray-900/10">
             <!-- プロフィール編集 -->
