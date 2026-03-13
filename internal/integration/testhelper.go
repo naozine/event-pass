@@ -120,16 +120,10 @@ func testUserContextMiddleware(queries *database.Queries) echo.MiddlewareFunc {
 			if userIDStr != "" {
 				var userID int64
 				if _, err := fmt.Sscanf(userIDStr, "%d", &userID); err == nil {
-					// ListUsers からユーザーを探す（GetUserByID がないため）
-					users, err := queries.ListUsers(c.Request().Context())
+					u, err := queries.GetUserByID(c.Request().Context(), userID)
 					if err == nil {
-						for _, u := range users {
-							if u.ID == userID {
-								ctx := appcontext.WithUser(c.Request().Context(), u.Email, true, false, u.Role, u.ID)
-								c.SetRequest(c.Request().WithContext(ctx))
-								break
-							}
-						}
+						ctx := appcontext.WithUser(c.Request().Context(), u.Email, true, false, u.Role, u.ID)
+						c.SetRequest(c.Request().WithContext(ctx))
 					}
 				}
 			}

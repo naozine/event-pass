@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -23,15 +22,14 @@ func NewAdminHandler(queries *database.Queries) *AdminHandler {
 func (h *AdminHandler) ListUsers(c echo.Context) error {
 	users, err := h.Queries.ListUsers(c.Request().Context())
 	if err != nil {
-		logger.Error("Failed to list users", "error", err)
-		return c.String(http.StatusInternalServerError, "Failed to list users")
+		logger.Error("ユーザー一覧の取得に失敗", "error", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "ユーザー一覧の取得に失敗しました")
 	}
-
-	return renderPage(c, "ユーザー管理", components.UserList(users))
+	return renderPage(c, "ユーザー管理", components.AdminUserList(users))
 }
 
 func (h *AdminHandler) NewUserPage(c echo.Context) error {
-	return components.UserForm().Render(c.Request().Context(), c.Response().Writer)
+	return renderPage(c, "ユーザー登録", components.AdminUserForm())
 }
 
 func (h *AdminHandler) CreateUser(c echo.Context) error {
@@ -40,12 +38,11 @@ func (h *AdminHandler) CreateUser(c echo.Context) error {
 	role := c.FormValue("role")
 
 	if name == "" || email == "" || role == "" {
-		return c.String(http.StatusBadRequest, "Name, email and role are required")
+		return echo.NewHTTPError(http.StatusBadRequest, "名前・メールアドレス・ロールは必須です")
 	}
 
-	// Validate role
 	if role != "admin" && role != "editor" && role != "viewer" {
-		return c.String(http.StatusBadRequest, "Invalid role")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なロールです")
 	}
 
 	_, err := h.Queries.CreateUser(c.Request().Context(), database.CreateUserParams{
@@ -54,117 +51,69 @@ func (h *AdminHandler) CreateUser(c echo.Context) error {
 		Role:     role,
 		IsActive: true,
 	})
-
 	if err != nil {
-		logger.Error("Failed to create user", "error", err, "email", email)
-		// In a real app, handle duplicate email error specifically
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to create user: %v", err))
+		logger.Error("ユーザー作成に失敗", "error", err, "email", email)
+		return echo.NewHTTPError(http.StatusInternalServerError, "ユーザーの作成に失敗しました")
 	}
 
-	// Return updated user list wrapped in Base, because HTMX target is main
-	// We could just return UserList if target was the list container
-	// But UserForm replaces "main" if we are not careful, wait.
-	// UserForm hx-target="main" -> this replaces the <main> content with the response.
-	// So we should return the UserList component.
-
-	users, err := h.Queries.ListUsers(c.Request().Context())
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to list users")
-	}
-
-	return components.UserList(users).Render(c.Request().Context(), c.Response().Writer)
+	return c.Redirect(http.StatusSeeOther, "/admin/users")
 }
 
 func (h *AdminHandler) EditUserPage(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "Invalid ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
-	// We need GetUserByID query, currently we only have GetUserByEmail.
-	// Let's assume GetUserByEmail works or add GetUser query?
-	// The generated code might not have GetUserByID if we didn't put it in query.sql.
-	// Let's check query.sql or add it.
-	// Wait, we didn't add GetUserByID in query.sql. We have GetUserByEmail.
-	// We should add GetUserByID. But to avoid switching context, let's fetch all users and filter (inefficient)
-	// OR better, let's assume the ID is passed and we can add the query.
-	// I'll add the query first. No wait, I cannot change file inside this replace block.
-	// I will check if I can update user by ID without fetching first?
-	// Edit page NEEDS current data.
-	// I'll iterate list for now as fallback, it's fast enough for small user base.
-
-	users, err := h.Queries.ListUsers(c.Request().Context())
+	user, err := h.Queries.GetUserByID(c.Request().Context(), id)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to fetch users")
+		return echo.NewHTTPError(http.StatusNotFound, "ユーザーが見つかりません")
 	}
 
-	var targetUser database.User
-	found := false
-	for _, u := range users {
-		if u.ID == int64(id) {
-			targetUser = u
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return c.String(http.StatusNotFound, "User not found")
-	}
-
-	return components.UserEditForm(targetUser).Render(c.Request().Context(), c.Response().Writer)
+	return renderPage(c, "ユーザー編集", components.AdminUserEdit(user))
 }
 
 func (h *AdminHandler) UpdateUser(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "Invalid ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
 	name := c.FormValue("name")
 	role := c.FormValue("role")
-	statusStr := c.FormValue("status")
-	isActive := statusStr == "active"
+	isActive := c.FormValue("status") == "active"
 
 	_, err = h.Queries.UpdateUser(c.Request().Context(), database.UpdateUserParams{
 		Name:     name,
 		Role:     role,
 		IsActive: isActive,
-		ID:       int64(id),
+		ID:       id,
 	})
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to update user")
+		logger.Error("ユーザー更新に失敗", "error", err, "id", id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "ユーザーの更新に失敗しました")
 	}
 
-	// Return updated list
-	users, err := h.Queries.ListUsers(c.Request().Context())
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to list users")
-	}
-	return components.UserList(users).Render(c.Request().Context(), c.Response().Writer)
+	return c.Redirect(http.StatusSeeOther, "/admin/users")
 }
 
 func (h *AdminHandler) DeleteUser(c echo.Context) error {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		return c.String(http.StatusBadRequest, "Invalid ID")
+		return echo.NewHTTPError(http.StatusBadRequest, "無効なIDです")
 	}
 
-	// Prevent self-deletion
+	// 自分自身の削除を防止
 	currentUserID := appcontext.GetUserID(c.Request().Context())
-	if int64(id) == currentUserID {
-		return c.String(http.StatusBadRequest, "自分自身を削除することはできません。")
+	if id == currentUserID {
+		return echo.NewHTTPError(http.StatusBadRequest, "自分自身を削除することはできません")
 	}
 
-	err = h.Queries.DeleteUser(c.Request().Context(), int64(id))
+	err = h.Queries.DeleteUser(c.Request().Context(), id)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to delete user")
+		logger.Error("ユーザー削除に失敗", "error", err, "id", id)
+		return echo.NewHTTPError(http.StatusInternalServerError, "ユーザーの削除に失敗しました")
 	}
 
-	// Return updated list
-	users, err := h.Queries.ListUsers(c.Request().Context())
-	if err != nil {
-		return c.String(http.StatusInternalServerError, "Failed to list users")
-	}
-	return components.UserList(users).Render(c.Request().Context(), c.Response().Writer)
+	return c.Redirect(http.StatusSeeOther, "/admin/users")
 }

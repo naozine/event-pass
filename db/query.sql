@@ -1,6 +1,9 @@
 -- name: GetUserByEmail :one
 SELECT * FROM users WHERE email = ? LIMIT 1;
 
+-- name: GetUserByID :one
+SELECT * FROM users WHERE id = ? LIMIT 1;
+
 -- name: CreateUser :one
 INSERT INTO users (email, name, role, is_active)
 VALUES (?, ?, ?, ?)

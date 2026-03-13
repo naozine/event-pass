@@ -100,10 +100,10 @@ func TestPermissionMatrix_AdminRoutes(t *testing.T) {
 			ViewerStatus: http.StatusForbidden, UnauthStatus: http.StatusSeeOther,
 		},
 		{
-			Name: "POST /admin/users（ユーザー作成実行）",
-			Method: http.MethodPost, Path: "/admin/users",
+			Name: "POST /admin/users/new（ユーザー作成実行）",
+			Method: http.MethodPost, Path: "/admin/users/new",
 			Body: "name=NewUser&email=new@test.com&role=viewer",
-			AdminStatus: http.StatusOK, EditorStatus: http.StatusForbidden,
+			AdminStatus: http.StatusSeeOther, EditorStatus: http.StatusForbidden,
 			ViewerStatus: http.StatusForbidden, UnauthStatus: http.StatusSeeOther,
 		},
 		{
@@ -113,16 +113,16 @@ func TestPermissionMatrix_AdminRoutes(t *testing.T) {
 			ViewerStatus: http.StatusForbidden, UnauthStatus: http.StatusSeeOther,
 		},
 		{
-			Name: "POST /admin/users/:id（ユーザー更新実行）",
-			Method: http.MethodPost, Path: fmt.Sprintf("/admin/users/%d", targetID),
+			Name: "POST /admin/users/:id/update（ユーザー更新実行）",
+			Method: http.MethodPost, Path: fmt.Sprintf("/admin/users/%d/update", targetID),
 			Body: "name=UpdatedViewer&role=viewer&status=active",
-			AdminStatus: http.StatusOK, EditorStatus: http.StatusForbidden,
+			AdminStatus: http.StatusSeeOther, EditorStatus: http.StatusForbidden,
 			ViewerStatus: http.StatusForbidden, UnauthStatus: http.StatusSeeOther,
 		},
 		{
-			Name: "DELETE /admin/users/:id（ユーザー削除実行）",
-			Method: http.MethodDelete, Path: fmt.Sprintf("/admin/users/%d", seed.DeletableUser.ID),
-			AdminStatus: http.StatusOK, EditorStatus: http.StatusForbidden,
+			Name: "POST /admin/users/:id/delete（ユーザー削除実行）",
+			Method: http.MethodPost, Path: fmt.Sprintf("/admin/users/%d/delete", seed.DeletableUser.ID),
+			AdminStatus: http.StatusSeeOther, EditorStatus: http.StatusForbidden,
 			ViewerStatus: http.StatusForbidden, UnauthStatus: http.StatusSeeOther,
 		},
 	}

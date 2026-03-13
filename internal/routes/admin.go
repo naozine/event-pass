@@ -19,8 +19,8 @@ func RegisterAdminRoutes(e *echo.Echo, queries *database.Queries, authMW echo.Mi
 
 	adminGroup.GET("/users", adminHandler.ListUsers)
 	adminGroup.GET("/users/new", adminHandler.NewUserPage)
-	adminGroup.POST("/users", adminHandler.CreateUser)
+	adminGroup.POST("/users/new", adminHandler.CreateUser)
 	adminGroup.GET("/users/:id/edit", adminHandler.EditUserPage)
-	adminGroup.POST("/users/:id", adminHandler.UpdateUser)
-	adminGroup.DELETE("/users/:id", adminHandler.DeleteUser)
+	adminGroup.POST("/users/:id/update", adminHandler.UpdateUser)
+	adminGroup.POST("/users/:id/delete", adminHandler.DeleteUser)
 }

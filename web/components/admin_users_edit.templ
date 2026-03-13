@@ -1,0 +1,72 @@
+package components
+
+import (
+    "fmt"
+    "github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+)
+
+templ AdminUserEdit(user database.User) {
+    <div class="max-w-xl mx-auto">
+        <div class="mb-8">
+            <h3 class="text-2xl font-bold tracking-tight text-gray-900">ユーザー編集</h3>
+            <p class="mt-2 text-sm text-gray-500">{ user.Name } さんの情報を更新します。</p>
+        </div>
+
+        <form action={ templ.URL(fmt.Sprintf("/admin/users/%d/update", user.ID)) } method="POST" class="space-y-6">
+            <div>
+                <label for="name" class="block text-sm font-medium leading-6 text-gray-900">名前</label>
+                <div class="mt-2">
+                    <input type="text" name="name" id="name" value={ user.Name } required
+                        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium leading-6 text-gray-900">メールアドレス（変更不可）</label>
+                <div class="mt-2">
+                    <input type="email" disabled value={ user.Email }
+                        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 sm:text-sm sm:leading-6"
+                    />
+                </div>
+            </div>
+
+            <div>
+                <label for="role" class="block text-sm font-medium leading-6 text-gray-900">ロール</label>
+                <div class="mt-2">
+                    <select id="role" name="role"
+                        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:max-w-xs sm:text-sm sm:leading-6">
+                        <option value="viewer" selected?={ user.Role == "viewer" }>Viewer（閲覧のみ）</option>
+                        <option value="editor" selected?={ user.Role == "editor" }>Editor（編集可能）</option>
+                        <option value="admin" selected?={ user.Role == "admin" }>Admin（管理者）</option>
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <label for="status" class="block text-sm font-medium leading-6 text-gray-900">ステータス</label>
+                <div class="mt-2">
+                    <select id="status" name="status"
+                        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:max-w-xs sm:text-sm sm:leading-6">
+                        <option value="active" selected?={ user.IsActive }>有効</option>
+                        <option value="inactive" selected?={ !user.IsActive }>無効（ログイン不可）</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-x-4 pt-6 border-t border-gray-100">
+                <a href="/admin/users" class="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700">キャンセル</a>
+                <button type="submit" class="rounded-md bg-black px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black transition-colors">
+                    更新
+                </button>
+            </div>
+        </form>
+
+        <!-- 削除フォーム（更新フォームとは独立） -->
+        <div class="mt-8 pt-6 border-t border-red-100">
+            <form action={ templ.URL(fmt.Sprintf("/admin/users/%d/delete", user.ID)) } method="POST" onsubmit="return confirm('本当にこのユーザーを削除しますか？この操作は元に戻せません。');">
+                <button type="submit" class="text-sm font-semibold leading-6 text-red-600 hover:text-red-800">このユーザーを削除する</button>
+            </form>
+        </div>
+    </div>
+}
