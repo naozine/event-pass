@@ -36,3 +36,4 @@ fly.toml
 # Add your project-specific ignores here
 /my-local-data.csv
 bench.bin
+loadtest/*.xlsx

@@ -88,6 +88,9 @@ fly-status:
 # PUBLIC_HOST にカスタムドメインを設定してから実行
 # 既存の A/AAAA/CNAME レコードがあれば削除してから CNAME を作成
 # 証明書発行のため Proxy OFF で作成 → 発行後にユーザーが Proxy ON にする
+# Cloudflare Proxy 経由での証明書自動更新に必要な DNS レコードも追加:
+#   - _fly-ownership TXT: fly.io へのドメイン所有権証明
+#   - _acme-challenge CNAME: Let's Encrypt DNS チャレンジ用
 fly-dns-setup:
 	@if [ -z "$(CF_API_TOKEN)" ] || [ -z "$(CF_ZONE_ID)" ]; then \
 		echo "Error: CF_API_TOKEN, CF_ZONE_ID を deploy.config に設定してください"; \
@@ -116,8 +119,53 @@ fly-dns-setup:
 		| jq -r 'if .success then "DNS record created: \(.result.name) (Proxy OFF)" else "Error: \(.errors[0].message)" end'
 	# 3. fly.io にカスタムドメインの証明書を追加
 	@echo ">> Adding certificate for $(PUBLIC_HOST) on fly.io..."
-	fly certs add $(PUBLIC_HOST) -a $(PROJECT_NAME)
-	# 4. 証明書発行を待機
+	-@fly certs add $(PUBLIC_HOST) -a $(PROJECT_NAME)
+	# 4. fly certs から CNAME ターゲットを取得し、アプリ ID を抽出
+	#    例: CNAME → 535p2xn.project-name.fly.dev → APP_ID = 535p2xn
+	@APP_ID=$$(fly certs setup $(PUBLIC_HOST) -a $(PROJECT_NAME) 2>/dev/null \
+		| grep -oE '[a-z0-9]+\.$(PROJECT_NAME)\.fly\.dev' \
+		| head -1 | cut -d. -f1); \
+	if [ -z "$$APP_ID" ]; then \
+		echo "Warning: アプリ ID を取得できませんでした。_fly-ownership / _acme-challenge は手動で設定してください"; \
+	else \
+		echo ">> App ID: $$APP_ID"; \
+		HOSTNAME=$$(echo "$(PUBLIC_HOST)" | sed 's/\.[^.]*\.[^.]*$$//'); \
+		echo ">> Setting up _fly-ownership TXT record..."; \
+		EXISTING=$$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$(CF_ZONE_ID)/dns_records?name=_fly-ownership.$(PUBLIC_HOST)&type=TXT" \
+			-H "Authorization: Bearer $(CF_API_TOKEN)" \
+			| jq -r '.result[0].id // empty'); \
+		if [ -n "$$EXISTING" ]; then \
+			curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$(CF_ZONE_ID)/dns_records/$$EXISTING" \
+				-H "Authorization: Bearer $(CF_API_TOKEN)" \
+				-H "Content-Type: application/json" \
+				--data "{\"type\":\"TXT\",\"name\":\"_fly-ownership.$(PUBLIC_HOST)\",\"content\":\"app-$$APP_ID\",\"ttl\":1}" \
+				| jq -r 'if .success then "TXT record updated: _fly-ownership -> app-\("'"$$APP_ID"'")" else "Error: \(.errors[0].message)" end'; \
+		else \
+			curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$(CF_ZONE_ID)/dns_records" \
+				-H "Authorization: Bearer $(CF_API_TOKEN)" \
+				-H "Content-Type: application/json" \
+				--data "{\"type\":\"TXT\",\"name\":\"_fly-ownership.$(PUBLIC_HOST)\",\"content\":\"app-$$APP_ID\",\"ttl\":1}" \
+				| jq -r 'if .success then "TXT record created: _fly-ownership -> app-\("'"$$APP_ID"'")" else "Error: \(.errors[0].message)" end'; \
+		fi; \
+		echo ">> Setting up _acme-challenge CNAME record..."; \
+		EXISTING=$$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/$(CF_ZONE_ID)/dns_records?name=_acme-challenge.$(PUBLIC_HOST)&type=CNAME" \
+			-H "Authorization: Bearer $(CF_API_TOKEN)" \
+			| jq -r '.result[0].id // empty'); \
+		if [ -n "$$EXISTING" ]; then \
+			curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/$(CF_ZONE_ID)/dns_records/$$EXISTING" \
+				-H "Authorization: Bearer $(CF_API_TOKEN)" \
+				-H "Content-Type: application/json" \
+				--data "{\"type\":\"CNAME\",\"name\":\"_acme-challenge.$(PUBLIC_HOST)\",\"content\":\"$(PUBLIC_HOST).$$APP_ID.flydns.net\",\"proxied\":false,\"ttl\":1}" \
+				| jq -r 'if .success then "CNAME record updated: _acme-challenge" else "Error: \(.errors[0].message)" end'; \
+		else \
+			curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$(CF_ZONE_ID)/dns_records" \
+				-H "Authorization: Bearer $(CF_API_TOKEN)" \
+				-H "Content-Type: application/json" \
+				--data "{\"type\":\"CNAME\",\"name\":\"_acme-challenge.$(PUBLIC_HOST)\",\"content\":\"$(PUBLIC_HOST).$$APP_ID.flydns.net\",\"proxied\":false,\"ttl\":1}" \
+				| jq -r 'if .success then "CNAME record created: _acme-challenge" else "Error: \(.errors[0].message)" end'; \
+		fi; \
+	fi
+	# 6. 証明書発行を待機
 	@echo ">> Waiting for certificate issuance..."
 	@for i in 1 2 3 4 5 6; do \
 		sleep 10; \

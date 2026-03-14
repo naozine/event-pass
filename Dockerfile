@@ -45,11 +45,10 @@ FROM alpine:3.21
 # シェルやメンテナンスコマンドが使える軽量ランタイム
 # ca-certificates: HTTPS通信（SMTP TLS等）に必要
 # tzdata: タイムゾーン処理に必要
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata su-exec
 
-# nonroot ユーザーで実行
+# nonroot ユーザーで実行（entrypoint.sh で root → appuser に降格）
 RUN adduser -D -u 10001 appuser
-USER appuser
 
 WORKDIR /app
 
@@ -68,5 +67,6 @@ ENV PORT=8080
 # ポートを公開
 EXPOSE 8080
 
-# 実行
-ENTRYPOINT ["/app/server"]
+# エントリポイント（データディレクトリの所有権修正後、appuser で実行）
+COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
