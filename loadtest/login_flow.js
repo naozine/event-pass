@@ -1,14 +1,16 @@
 // =============================================================================
-// k6 負荷テスト: マジックリンクログインフロー
+// k6 負荷テスト: マジックリンクログインフロー（複数ユーザー版）
 // =============================================================================
 // 使い方:
 //   k6 run loadtest/login_flow.js --env BASE_URL=https://your-app.fly.dev
 //
 // 前提条件:
-//   - .bypass_emails にテスト用メールアドレスが登録済み
-//   - テスト用ユーザーが users テーブルに存在
+//   - .bypass_emails に *@loadtest.example.com が登録済み
+//   - ADMIN_EMAIL のユーザーが存在し、.bypass_emails にも登録済み
+//   - setup() がテストユーザーを自動作成するため、事前準備不要
 //
 // 段階的に同時ユーザー数を増やし、Login → Verify のフルフローを実行する。
+// 各 VU は異なるユーザーでログインし、セッション蓄積の負荷も検証する。
 // =============================================================================
 
 import http from "k6/http";
@@ -26,37 +28,115 @@ const verifyErrors = new Counter("verify_errors");
 // ---------------------------------------------------------------------------
 // テスト設定
 // ---------------------------------------------------------------------------
-// BASE_URL は --env で指定（例: --env BASE_URL=https://your-app.fly.dev）
 const BASE_URL = __ENV.BASE_URL || "http://localhost:8080";
-
-// テスト用メールアドレス（.bypass_emails に登録済みであること）
-const TEST_EMAIL = __ENV.TEST_EMAIL || "test@example.com";
+const ADMIN_EMAIL = __ENV.ADMIN_EMAIL || "test@example.com";
+const NUM_USERS = parseInt(__ENV.NUM_USERS || "100");
 
 // 段階的にユーザー数を増やす
 export const options = {
   stages: [
-    { duration: "10s", target: 10 },  // ウォームアップ: 10秒で10ユーザーまで増加
-    { duration: "20s", target: 25 },  // 25ユーザーで20秒間
-    { duration: "20s", target: 50 },  // 50ユーザーで20秒間
-    { duration: "20s", target: 100 }, // 100ユーザーで20秒間
-    { duration: "10s", target: 0 },   // クールダウン
+    { duration: "10s", target: 10 }, // ウォームアップ
+    { duration: "20s", target: 25 }, // 25 VU
+    { duration: "20s", target: 50 }, // 50 VU
+    { duration: "20s", target: 100 }, // 100 VU
+    { duration: "10s", target: 0 }, // クールダウン
   ],
   thresholds: {
-    http_req_failed: ["rate<0.1"],           // エラー率 10% 未満
-    login_duration: ["p(95)<5000"],           // Login の 95%ile が 5秒未満
-    verify_duration: ["p(95)<5000"],          // Verify の 95%ile が 5秒未満
-    http_req_duration: ["p(95)<5000"],        // 全体の 95%ile が 5秒未満
+    http_req_failed: ["rate<0.1"],
+    login_duration: ["p(95)<5000"],
+    verify_duration: ["p(95)<5000"],
+    http_req_duration: ["p(95)<5000"],
   },
 };
 
 // ---------------------------------------------------------------------------
-// メインシナリオ: Login → Verify
+// setup: 管理者でログインし、テストユーザーを一括作成
 // ---------------------------------------------------------------------------
-export default function () {
+export function setup() {
+  console.log(`Setup: ${NUM_USERS} 件のテストユーザーを作成中...`);
+
+  // 1. 管理者でログイン → セッション Cookie 取得
+  const loginRes = http.post(
+    `${BASE_URL}/auth/login`,
+    JSON.stringify({ email: ADMIN_EMAIL }),
+    { headers: { "Content-Type": "application/json" } }
+  );
+
+  if (loginRes.status !== 200) {
+    throw new Error(
+      `管理者ログインに失敗: status=${loginRes.status}, body=${loginRes.body}`
+    );
+  }
+
+  const loginBody = JSON.parse(loginRes.body);
+  if (!loginBody.magic_link) {
+    throw new Error(
+      `magic_link が返されませんでした（${ADMIN_EMAIL} は .bypass_emails に登録済みですか？）`
+    );
+  }
+
+  const magicLinkUrl = new URL(loginBody.magic_link);
+  const token = magicLinkUrl.searchParams.get("token");
+
+  // Verify でセッション Cookie を取得
+  const verifyRes = http.get(`${BASE_URL}/auth/verify?token=${token}`, {
+    redirects: 0,
+  });
+
+  if (verifyRes.status !== 302) {
+    throw new Error(`管理者 Verify に失敗: status=${verifyRes.status}`);
+  }
+
+  // セッション Cookie を取得（k6 は jar でクッキーを自動管理）
+  const jar = http.cookieJar();
+  const cookies = jar.cookiesForURL(BASE_URL);
+  console.log(`管理者セッション取得完了（Cookie keys: ${Object.keys(cookies)}）`);
+
+  // 2. テストユーザーをインポート API で一括作成
+  //    Excel ファイルの代わりに、個別に POST /admin/users/new で作成
+  const emails = [];
+  let created = 0;
+  let skipped = 0;
+
+  for (let i = 1; i <= NUM_USERS; i++) {
+    const email = `loadtest-${String(i).padStart(4, "0")}@loadtest.example.com`;
+    const name = `LoadTest User ${i}`;
+
+    const res = http.post(
+      `${BASE_URL}/admin/users/new`,
+      { name: name, email: email, role: "viewer" },
+      { redirects: 0 }
+    );
+
+    if (res.status === 303) {
+      created++;
+    } else {
+      // 既に存在する場合など
+      skipped++;
+    }
+
+    emails.push(email);
+  }
+
+  console.log(
+    `Setup 完了: ${created} 件作成, ${skipped} 件スキップ, 合計 ${emails.length} 件`
+  );
+
+  return { emails };
+}
+
+// ---------------------------------------------------------------------------
+// メインシナリオ: Login → Verify（各 VU が異なるユーザーを使用）
+// ---------------------------------------------------------------------------
+export default function (data) {
+  // VU ごとに異なるユーザーを割り当て（VU ID でローテーション）
+  const vuIndex = (__VU - 1) % data.emails.length;
+  const email = data.emails[vuIndex];
+
   // Phase 1: POST /auth/login
   const loginRes = http.post(
     `${BASE_URL}/auth/login`,
-    JSON.stringify({ email: TEST_EMAIL }),
+    JSON.stringify({ email: email }),
     {
       headers: { "Content-Type": "application/json" },
       tags: { name: "login" },
@@ -80,7 +160,7 @@ export default function () {
   if (!loginOk) {
     loginErrors.add(1);
     console.error(
-      `login failed: status=${loginRes.status}, body=${loginRes.body}`
+      `login failed: VU=${__VU}, email=${email}, status=${loginRes.status}, body=${loginRes.body}`
     );
     return;
   }
@@ -92,12 +172,11 @@ export default function () {
 
   if (!token) {
     loginErrors.add(1);
-    console.error("token extraction failed");
+    console.error(`token extraction failed: VU=${__VU}`);
     return;
   }
 
   // Phase 2: GET /auth/verify?token=xxx
-  // リダイレクト（302）を自動追従しない設定
   const verifyRes = http.get(`${BASE_URL}/auth/verify?token=${token}`, {
     redirects: 0,
     tags: { name: "verify" },
@@ -113,7 +192,6 @@ export default function () {
     },
     "verify: has session cookie": (r) => {
       const cookies = r.cookies;
-      // クッキー名はプロジェクトにより異なる
       return Object.keys(cookies).length > 0;
     },
   });
@@ -121,10 +199,17 @@ export default function () {
   if (!verifyOk) {
     verifyErrors.add(1);
     console.error(
-      `verify failed: status=${verifyRes.status}, location=${verifyRes.headers["Location"]}`
+      `verify failed: VU=${__VU}, status=${verifyRes.status}, location=${verifyRes.headers["Location"]}`
     );
   }
 
   // 実ユーザーの操作間隔をシミュレート（0.5〜1.5秒）
   sleep(Math.random() + 0.5);
+}
+
+// ---------------------------------------------------------------------------
+// teardown: テスト結果のサマリーログ
+// ---------------------------------------------------------------------------
+export function teardown(data) {
+  console.log(`Teardown: テストユーザー ${data.emails.length} 件を使用しました`);
 }
