@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/naozine/project_crud_with_auth_tmpl/db"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
@@ -48,7 +49,7 @@ func main() {
 	if dbPath == "" {
 		dbPath = "app.db"
 	}
-	conn, err := sql.Open("sqlite", "file:"+dbPath+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
+	conn, err := sql.Open("sqlite", "file:"+dbPath+"?_pragma=busy_timeout(30000)&_pragma=journal_mode(WAL)&_pragma=foreign_keys(on)")
 	if err != nil {
 		log.Fatal("Failed to connect to app.db:", err)
 	}
@@ -160,6 +161,9 @@ func main() {
 	e.HTTPErrorHandler = handlers.CustomHTTPErrorHandler // カスタムエラーハンドラ
 	e.Use(appMiddleware.AccessLogMiddleware(logger.AccessWriter()))
 	e.Use(middleware.Recover())
+	e.Use(middleware.ContextTimeoutWithConfig(middleware.ContextTimeoutConfig{
+		Timeout: 5 * time.Second, // リクエスト処理の上限
+	}))
 	e.Use(appMiddleware.UserContextMiddleware(ml, conn)) // Add UserContext middleware globally
 
 	e.Static("/static", "web/static")
@@ -196,7 +200,14 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	log.Fatal(e.Start(":" + port))
+	// サーバータイムアウト設定
+	s := &http.Server{
+		Addr:         ":" + port,
+		ReadTimeout:  10 * time.Second,  // リクエストボディ読み取りの上限
+		WriteTimeout: 10 * time.Second,  // レスポンス書き込みの上限
+		IdleTimeout:  120 * time.Second, // Keep-Alive 接続のアイドル上限
+	}
+	log.Fatal(e.StartServer(s))
 }
 
 func mustAtoi(s string, defaultValue int) int {
