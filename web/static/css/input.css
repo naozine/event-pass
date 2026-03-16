@@ -2,9 +2,6 @@
 @source "../../layouts/**/*.templ";
 @source "../../components/**/*.templ";
 
-/* Font */
-body { font-family: 'Inter', sans-serif; }
-
 /* Nav menu (Popover API) */
 #nav-menu {
     margin: 0;
