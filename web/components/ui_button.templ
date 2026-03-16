@@ -22,8 +22,9 @@ templ PrimaryLink(text string, href templ.SafeURL) {
 }
 
 // SecondaryButton は補助的なアクション用のボタンを描画する。
-templ SecondaryButton(text string) {
-    <button type="button" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+// 任意の HTML 属性（onclick, data-* 等）を追加できる。
+templ SecondaryButton(text string, attrs templ.Attributes) {
+    <button type="button" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" { attrs... }>
         { text }
     </button>
 }

@@ -60,28 +60,14 @@ templ Profile(user database.User, hasPasskey bool) {
                                             </div>
                                         </div>
                                         <div class="flex space-x-4">
-                                            <button
-                                                data-email={ user.Email }
-                                                onclick="registerPasskey(this.dataset.email)"
-                                                type="button"
-                                                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                            >
-                                                別のパスキーを追加する
-                                            </button>
+                                            @SecondaryButton("別のパスキーを追加する", templ.Attributes{"data-email": user.Email, "onclick": "registerPasskey(this.dataset.email)"})
                                             <form action="/profile/passkeys/delete" method="POST" onsubmit="return confirm('本当に全てのパスキーを削除しますか？次回からパスキーでログインできなくなります。');">
                                                 @DangerButton("全削除する")
                                             </form>
                                         </div>
                                     } else {
                                         <div id="auth-messages" class="hidden mb-4"></div>
-                                        <button
-                                            data-email={ user.Email }
-                                            onclick="registerPasskey(this.dataset.email)"
-                                            type="button"
-                                            class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                                        >
-                                            パスキーを登録する
-                                        </button>
+                                        @SecondaryButton("パスキーを登録する", templ.Attributes{"data-email": user.Email, "onclick": "registerPasskey(this.dataset.email)"})
                                     }
                                 </div>
                             </div>
