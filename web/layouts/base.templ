@@ -16,8 +16,6 @@ templ Base(title string, content templ.Component) {
 			<!-- htmx: ページ遷移の置き換えには使わない。検索・バリデーション・トグル等の部分更新のみ -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 			<script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
-            <!-- Alpine.js: UI state management (menu toggle) のみに使用 -->
-            <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 			<script src="https://cdn.tailwindcss.com"></script>
             <!-- WebAuthn Scripts -->
             <script src="/webauthn/static/webauthn.js"></script>
@@ -28,28 +26,42 @@ templ Base(title string, content templ.Component) {
             <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
             <style>
                 body { font-family: 'Inter', sans-serif; }
-                [x-cloak] { display: none !important; }
+                #nav-menu {
+                    margin: 0;
+                    border: 0;
+                    padding: 0;
+                    max-width: 20rem;
+                    width: 100%;
+                    height: 100%;
+                    max-height: 100%;
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    background: white;
+                    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+                }
+                #nav-menu::backdrop {
+                    background: rgb(107 114 128 / 0.75);
+                }
             </style>
 		</head>
 		<body class="bg-gray-50 text-gray-900 min-h-screen font-sans antialiased">
-            
+
             // Retrieve user info from context
             {{
                 userEmail, isLoggedIn, _ := appcontext.GetUser(ctx)
                 userRole := appcontext.GetUserRole(ctx)
             }}
 
-            <!-- Navigation with Alpine.js for drawer menu -->
-			<nav x-data="{ open: false }" class="bg-white border-b border-gray-200 sticky top-0 z-50">
+			<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
 				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div class="flex justify-between h-16">
 						<div class="flex items-center">
                             if isLoggedIn {
-                                <!-- Hamburger button -->
-                                <button @click="open = true" type="button" class="mr-4 -ml-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
-                                    <span class="sr-only">Open menu</span>
+                                <button popovertarget="nav-menu" type="button" class="mr-4 -ml-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                                    <span class="sr-only">メニューを開く</span>
                                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
                                     </svg>
                                 </button>
                             }
@@ -73,57 +85,42 @@ templ Base(title string, content templ.Component) {
 				</div>
 
                 if isLoggedIn {
-                    <!-- Mobile menu / Drawer -->
-                    <div x-show="open" class="relative z-50" aria-labelledby="slide-over-title" role="dialog" aria-modal="true" x-cloak>
-                        <!-- Background backdrop -->
-                        <div x-show="open" x-transition:enter="ease-in-out duration-500" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in-out duration-500" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="open = false"></div>
+                    <div id="nav-menu" popover>
+                        <div class="flex h-full flex-col overflow-y-auto pt-3 pb-6">
+                            <div class="px-4 sm:px-6 flex items-center gap-3">
+                                <button popovertarget="nav-menu" type="button" class="-ml-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                                    <span class="sr-only">メニューを閉じる</span>
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                                <h2 class="text-base font-semibold leading-6 text-gray-900">メニュー</h2>
+                            </div>
+                            <div class="relative mt-6 flex-1 px-4 sm:px-6">
+                                <div class="flex flex-col space-y-1">
+                                    <a href="/projects" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">プロジェクト</a>
+                                    if userRole == "admin" {
+                                        <a href="/admin/users" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">ユーザー管理</a>
+                                    }
+                                </div>
 
-                        <div class="fixed inset-0 overflow-hidden pointer-events-none">
-                            <div class="absolute inset-0 overflow-hidden">
-                                <div class="fixed inset-y-0 left-0 flex max-w-full pr-10 pointer-events-none">
-                                    <!-- Slide-over panel -->
-                                    <div x-show="open" x-transition:enter="transform transition ease-in-out duration-500 sm:duration-700" x-transition:enter-start="-translate-x-full" x-transition:enter-end="translate-x-0" x-transition:leave="transform transition ease-in-out duration-500 sm:duration-700" x-transition:leave-start="translate-x-0" x-transition:leave-end="-translate-x-full" class="pointer-events-auto w-screen max-w-xs">
-                                        <div class="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
-                                            <div class="px-4 sm:px-6 flex items-center justify-between">
-                                                <h2 class="text-base font-semibold leading-6 text-gray-900" id="slide-over-title">メニュー</h2>
-                                                <button @click="open = false" type="button" class="relative rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                                    <span class="absolute -inset-2.5"></span>
-                                                    <span class="sr-only">Close panel</span>
-                                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                            <div class="relative mt-6 flex-1 px-4 sm:px-6">
-                                                <div class="flex flex-col space-y-1">
-                                                    <a href="/projects" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">プロジェクト</a>
-                                                    if userRole == "admin" {
-                                                        <a href="/admin/users" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">ユーザー管理</a>
-                                                    }
-                                                </div>
+                                <div class="mt-8 pt-6 border-t border-gray-200">
+                                     <div class="px-3 mb-4">
+                                        <p class="text-sm font-medium text-gray-500">ログイン中:</p>
+                                        <a href="/profile" class="block text-sm font-medium text-gray-900 truncate hover:text-indigo-600 hover:underline">{ userEmail }</a>
+                                     </div>
+                                     <div class="flex flex-col space-y-3 px-3">
+                                         <form action="/auth/logout" method="POST">
+                                             <button type="submit" class="w-full text-center rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100">
+                                                 ログアウト
+                                             </button>
+                                         </form>
+                                     </div>
+                                </div>
 
-                                                <div class="mt-8 pt-6 border-t border-gray-200">
-                                                     <div class="px-3 mb-4">
-                                                        <p class="text-sm font-medium text-gray-500">ログイン中:</p>
-                                                        <a href="/profile" class="block text-sm font-medium text-gray-900 truncate hover:text-indigo-600 hover:underline">{ userEmail }</a>
-                                                     </div>
-                                                     <!-- Mobile specific auth actions -->
-                                                     <div class="flex flex-col space-y-3 px-3">
-                                                         <form action="/auth/logout" method="POST">
-                                                             <button type="submit" class="w-full text-center rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100">
-                                                                 ログアウト
-                                                             </button>
-                                                         </form>
-                                                     </div>
-                                                </div>
-
-                                                <!-- Version Info -->
-                                                <div class="mt-auto pt-6 px-3">
-                                                    <p class="text-xs text-gray-400">{ version.Version }</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <!-- Version Info -->
+                                <div class="mt-auto pt-6 px-3">
+                                    <p class="text-xs text-gray-400">{ version.Version }</p>
                                 </div>
                             </div>
                         </div>
