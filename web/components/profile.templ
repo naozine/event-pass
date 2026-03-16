@@ -1,0 +1,80 @@
+package components
+
+import (
+    "github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+)
+
+templ Profile(user database.User, hasPasskey bool) {
+    <div class="max-w-2xl mx-auto">
+        @PageHeader("マイページ", "アカウント情報の確認と編集ができます。")
+
+        <div class="space-y-10 divide-y divide-gray-900/10">
+            <!-- プロフィール編集 -->
+            @FormSection("プロフィール", "表示名を変更できます。") {
+                @CardWithFooter() {
+                    <form action="/profile" method="POST">
+                        @CardBody() {
+                            <div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                                <div class="sm:col-span-4">
+                                    @FormField("名前", "") {
+                                        @TextInput("name", user.Name, "")
+                                    }
+                                </div>
+
+                                <div class="sm:col-span-4">
+                                    @FormField("メールアドレス", "") {
+                                        @ReadOnlyField(user.Email)
+                                    }
+                                </div>
+
+                                <div class="sm:col-span-4">
+                                    @FormField("ロール", "") {
+                                        @ReadOnlyRoleField(user.Role)
+                                    }
+                                </div>
+                            </div>
+                        }
+                        @CardFooter() {
+                            @PrimaryButton("保存")
+                        }
+                    </form>
+                }
+            }
+
+            <!-- セキュリティ設定 (パスキー) -->
+            <div class="pt-10">
+                @FormSection("セキュリティ", "パスキーを登録すると、次回から指紋認証や顔認証でログインできます。") {
+                    @Card() {
+                        <div class="max-w-2xl space-y-6">
+                            <div>
+                                <h3 class="text-sm font-medium leading-6 text-gray-900">パスキー (Passkey)</h3>
+                                <div class="mt-2">
+                                    if hasPasskey {
+                                        <div class="flex items-center p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200" role="alert">
+                                            <svg class="flex-shrink-0 inline w-4 h-4 me-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"/>
+                                            </svg>
+                                            <span class="sr-only">Check icon</span>
+                                            <div>
+                                                <span class="font-medium">登録済み</span> パスキーが登録されています。次回から生体認証などでログインできます。
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-4">
+                                            @SecondaryButton("別のパスキーを追加する", templ.Attributes{"data-email": user.Email, "onclick": "registerPasskey(this.dataset.email)"})
+                                            <form action="/profile/passkeys/delete" method="POST" onsubmit="return confirm('本当に全てのパスキーを削除しますか？次回からパスキーでログインできなくなります。');">
+                                                @DangerButton("全削除する")
+                                            </form>
+                                        </div>
+                                    } else {
+                                        <div id="auth-messages" class="hidden mb-4"></div>
+                                        @SecondaryButton("パスキーを登録する", templ.Attributes{"data-email": user.Email, "onclick": "registerPasskey(this.dataset.email)"})
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}

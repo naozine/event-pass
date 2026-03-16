@@ -1,0 +1,26 @@
+package components
+
+templ AdminUserForm() {
+    <div class="max-w-xl mx-auto">
+        @PageHeader("ユーザー登録", "システムにログインできるユーザーを追加します。")
+
+        <form action="/admin/users/new" method="POST" class="space-y-6">
+            @FormField("名前", "") {
+                @TextInput("name", "", "例: 田中太郎")
+            }
+
+            @FormField("メールアドレス", "") {
+                @EmailInput("email", "", "例: tanaka@example.com")
+            }
+
+            @FormField("ロール", "") {
+                @RoleSelect("role", "viewer")
+            }
+
+            @FormFooter() {
+                @CancelLink("/admin/users")
+                @PrimaryButton("登録")
+            }
+        </form>
+    </div>
+}

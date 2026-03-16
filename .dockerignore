@@ -1,0 +1,46 @@
+# =============================================================================
+# .dockerignore - Docker ビルド時に除外するファイル
+# =============================================================================
+
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Build artifacts
+bin/
+tmp/
+
+# Database files (本番データをイメージに含めない)
+*.db
+*.db-shm
+*.db-wal
+
+# Environment files (機密情報)
+.env
+.env.*
+deploy.config
+.bypass_emails
+
+# Documentation
+*.md
+!README.md
+
+# Docker files (ネスト防止)
+Dockerfile*
+docker-compose*.yaml
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Test files
+*_test.go

@@ -1,0 +1,109 @@
+package layouts
+
+import (
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/appconfig"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/appcontext"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/version"
+)
+
+templ Base(title string, content templ.Component) {
+	<!DOCTYPE html>
+	<html lang="ja">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ title }</title>
+			<link href={ "/static/css/style.css?v=" + version.Commit } rel="stylesheet"/>
+            <!-- WebAuthn Scripts -->
+            <script src="/webauthn/static/webauthn.js"></script>
+            <script src={ "/static/js/auth.js?v=" + version.Commit } defer></script>
+
+		</head>
+		<body class="bg-gray-50 text-gray-900 min-h-screen font-sans antialiased">
+
+            // Retrieve user info from context
+            {{
+                userEmail, isLoggedIn, _ := appcontext.GetUser(ctx)
+                userRole := appcontext.GetUserRole(ctx)
+            }}
+
+			<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+					<div class="flex justify-between h-16">
+						<div class="flex items-center">
+                            if isLoggedIn {
+                                <button popovertarget="nav-menu" type="button" class="mr-4 -ml-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                                    <span class="sr-only">メニューを開く</span>
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                                    </svg>
+                                </button>
+                            }
+							<div class="flex-shrink-0 flex items-center">
+								<a href="/" class="text-lg font-bold text-gray-900 tracking-tight">{ appconfig.AppName }</a>
+							</div>
+						</div>
+                        <div class="flex items-center">
+                            if isLoggedIn {
+                                <a href="/profile" class="hidden sm:inline text-sm text-gray-600 mr-4 hover:text-gray-900 hover:underline">{ userEmail }</a>
+                                <div class="hidden sm:flex items-center">
+                                    <form action="/auth/logout" method="POST">
+                                        <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium">
+                                            ログアウト
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </div>
+					</div>
+				</div>
+
+                if isLoggedIn {
+                    <div id="nav-menu" popover>
+                        <div class="flex h-full flex-col overflow-y-auto pt-3 pb-6">
+                            <div class="px-4 sm:px-6 flex items-center gap-3">
+                                <button popovertarget="nav-menu" type="button" class="-ml-2 inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                                    <span class="sr-only">メニューを閉じる</span>
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                                <h2 class="text-base font-semibold leading-6 text-gray-900">メニュー</h2>
+                            </div>
+                            <div class="relative mt-6 flex-1 px-4 sm:px-6">
+                                <div class="flex flex-col space-y-1">
+                                    <a href="/projects" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">プロジェクト</a>
+                                    if userRole == "admin" {
+                                        <a href="/admin/users" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">ユーザー管理</a>
+                                    }
+                                </div>
+
+                                <div class="mt-8 pt-6 border-t border-gray-200">
+                                     <div class="px-3 mb-4">
+                                        <p class="text-sm font-medium text-gray-500">ログイン中:</p>
+                                        <a href="/profile" class="block text-sm font-medium text-gray-900 truncate hover:text-indigo-600 hover:underline">{ userEmail }</a>
+                                     </div>
+                                     <div class="flex flex-col space-y-3 px-3">
+                                         <form action="/auth/logout" method="POST">
+                                             <button type="submit" class="w-full text-center rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100">
+                                                 ログアウト
+                                             </button>
+                                         </form>
+                                     </div>
+                                </div>
+
+                                <!-- Version Info -->
+                                <div class="mt-auto pt-6 px-3">
+                                    <p class="text-xs text-gray-400">{ version.Version }</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+			</nav>
+			<main class="py-10 px-4 sm:px-6 lg:px-8">
+				@content
+			</main>
+		</body>
+	</html>
+}

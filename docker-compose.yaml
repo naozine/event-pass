@@ -1,0 +1,74 @@
+# =============================================================================
+# docker-compose.yaml - 本番環境用
+# =============================================================================
+# 使い方:
+#   1. .env ファイルを作成し、必要な環境変数を設定
+#   2. docker compose up -d
+#   3. docker compose logs -f で確認
+#
+# Caddy (リバースプロキシ) と同じネットワークに参加し、
+# コンテナ名でアクセス可能。ホストにポートは公開しない。
+# サーバ再起動時も自動起動 (restart: always)
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+        COMMIT: ${COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    image: ${APP_NAME}:latest
+    container_name: ${APP_NAME}
+    restart: always
+    expose:
+      - "8080"
+    networks:
+      - caddy-net
+    volumes:
+      # SQLite データベースの永続化（ホストディレクトリにバインド）
+      - ./data:/app/data
+    environment:
+      # DB パス（ボリューム内に配置）
+      - DB_PATH=/app/data/app.db
+      # アプリケーション設定
+      - PORT=8080
+      - SERVER_ADDR=${SERVER_ADDR}
+
+      # 管理者設定
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-}
+      - ADMIN_NAME=${ADMIN_NAME:-Admin}
+
+      # SMTP設定
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME:-}
+
+      # WebAuthn設定
+      - WEBAUTHN_RP_ID=${WEBAUTHN_RP_ID:-localhost}
+      - WEBAUTHN_RP_NAME=${WEBAUTHN_RP_NAME:-Project CRUD}
+      - WEBAUTHN_ALLOWED_ORIGINS=${WEBAUTHN_ALLOWED_ORIGINS:-http://localhost:8080}
+
+      # Litestream (Cloudflare R2 バックアップ) - 任意
+      # バケットはプロジェクトごとに分離し、API トークンもバケット単位で発行すること
+      # LITESTREAM_BUCKET 未設定時は <APP_NAME>-litestream がデフォルト
+      - LITESTREAM_ACCESS_KEY_ID=${LITESTREAM_ACCESS_KEY_ID:-}
+      - LITESTREAM_SECRET_ACCESS_KEY=${LITESTREAM_SECRET_ACCESS_KEY:-}
+      - LITESTREAM_R2_ENDPOINT=${LITESTREAM_R2_ENDPOINT:-}
+      - LITESTREAM_BUCKET=${LITESTREAM_BUCKET:-}
+      - LITESTREAM_PATH=${LITESTREAM_PATH:-}
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  caddy-net:
+    external: true

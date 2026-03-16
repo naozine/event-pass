@@ -1,0 +1,41 @@
+# =============================================================================
+# Caddy - 共有リバースプロキシ
+# =============================================================================
+# VPS上で1つだけ起動し、複数アプリへのリバースプロキシを担当。
+# 自動HTTPS対応（Let's Encrypt）。
+#
+# 初回セットアップ:
+#   make caddy-setup
+#
+# または手動で:
+#   docker network create caddy-net
+#   docker compose up -d
+# =============================================================================
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3
+    networks:
+      - caddy-net
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./sites:/etc/caddy/sites:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+networks:
+  caddy-net:
+    name: caddy-net
+    external: true
+
+volumes:
+  caddy-data:
+    name: caddy-data
+  caddy-config:
+    name: caddy-config

@@ -1,0 +1,30 @@
+# =============================================================================
+# Dockerfile.dev - 開発環境用
+# =============================================================================
+# Air を使ったホットリロード対応の開発環境
+# =============================================================================
+
+FROM golang:1.25-alpine
+
+# 開発に必要なツールをインストール
+RUN apk add --no-cache git curl
+
+# Air (ホットリロード) をインストール
+RUN go install github.com/air-verse/air@latest
+
+# templ と sqlc をインストール
+RUN go install github.com/a-h/templ/cmd/templ@latest && \
+    go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
+WORKDIR /app
+
+# 依存関係を先にダウンロード (キャッシュ効率化)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# ソースはマウントされるのでコピー不要
+
+EXPOSE 8080
+
+# Air で起動
+CMD ["air", "-c", ".air.toml"]

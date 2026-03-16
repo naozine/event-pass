@@ -1,0 +1,42 @@
+# ==========================================
+# BASE TEMPLATE SETTINGS (DO NOT EDIT)
+# ==========================================
+/bin
+/tmp
+/.idea
+/.dev_local
+*.log
+.env
+.env.*
+!.env.production.example
+.DS_Store
+
+# SQLC Generated Code
+# DBコードは自動生成されるため管理対象外とする
+internal/database/*.go
+
+# Templ Generated Files
+web/components/*_templ.go
+web/layouts/*_templ.go
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+*.db.bak
+*.db.tmp-*
+
+# etc
+/app
+.bypass_emails
+/tmp/build-errors.log
+deploy.config*
+fly.toml
+
+# ==========================================
+# BUSINESS LOGIC SETTINGS (EDIT FREELY)
+# ==========================================
+# Add your project-specific ignores here
+/my-local-data.csv
+bench.bin
+loadtest/*.xlsx

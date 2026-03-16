@@ -1,0 +1,88 @@
+package components
+
+templ SetupForm(errorMessage string) {
+	<div class="max-w-md mx-auto">
+		<div class="mb-8 text-center">
+			<h2 class="text-2xl font-bold tracking-tight text-gray-900">初期セットアップ</h2>
+			<p class="mt-2 text-sm text-gray-500">最初の管理者アカウントを作成します。</p>
+		</div>
+
+		<form id="setup-form" class="space-y-6">
+			@FormField("名前", "") {
+				@TextInput("name", "Admin", "Admin")
+			}
+
+			@FormField("メールアドレス", "") {
+				@EmailInput("email", "", "admin@example.com")
+			}
+
+			if errorMessage != "" {
+				<div id="setup-messages">
+					@AlertError(errorMessage)
+				</div>
+			} else {
+				<div id="setup-messages" class="hidden p-4 rounded-md"></div>
+			}
+
+			<button type="submit" id="setup-btn" class="w-full rounded-md bg-black px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black transition-colors">
+				管理者を作成してパスキーを登録
+			</button>
+		</form>
+
+		<p class="mt-6 text-center text-sm text-gray-500">
+			パスキーを登録することで、メール認証なしでログインできるようになります。
+		</p>
+	</div>
+
+	<script>
+		document.getElementById('setup-form').addEventListener('submit', async function(e) {
+			e.preventDefault();
+
+			const btn = document.getElementById('setup-btn');
+			const msgDiv = document.getElementById('setup-messages');
+			const email = document.getElementById('email').value;
+			const name = document.getElementById('name').value;
+
+			btn.disabled = true;
+			btn.textContent = '処理中...';
+			msgDiv.classList.add('hidden');
+
+			try {
+				// 1. Create admin user
+				const createResp = await fetch('/setup', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ email, name })
+				});
+				const createResult = await createResp.json();
+
+				if (!createResp.ok || createResult.error) {
+					throw new Error(createResult.error || 'ユーザー作成に失敗しました');
+				}
+
+				// 2. Register passkey using MagicLink library
+				msgDiv.classList.remove('hidden', 'bg-red-50', 'text-red-700');
+				msgDiv.classList.add('bg-blue-50', 'text-blue-700');
+				msgDiv.textContent = 'パスキーを登録中...';
+
+				const result = await MagicLink.register(email);
+
+				if (result.success) {
+					msgDiv.classList.remove('bg-blue-50', 'text-blue-700');
+					msgDiv.classList.add('bg-green-50', 'text-green-700');
+					msgDiv.textContent = 'セットアップ完了！ログイン画面に移動します...';
+
+					setTimeout(() => {
+						window.location.href = '/auth/login';
+					}, 1500);
+				}
+			} catch (err) {
+				msgDiv.classList.remove('hidden', 'bg-blue-50', 'text-blue-700', 'bg-green-50', 'text-green-700');
+				msgDiv.classList.add('bg-red-50', 'text-red-700');
+				msgDiv.textContent = err.message || 'エラーが発生しました';
+				btn.disabled = false;
+				btn.textContent = '管理者を作成してパスキーを登録';
+			}
+		});
+	</script>
+}

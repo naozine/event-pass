@@ -1,0 +1,28 @@
+package components
+
+import "fmt"
+
+templ ErrorPage(code int, message string) {
+	<div class="min-h-[60vh] flex items-center justify-center">
+		<div class="text-center">
+			<p class="text-6xl font-bold text-gray-300">{ fmt.Sprintf("%d", code) }</p>
+			<h1 class="mt-4 text-2xl font-semibold text-gray-900">
+				if code == 404 {
+					ページが見つかりません
+				} else if code == 403 {
+					アクセス権限がありません
+				} else if code == 500 {
+					サーバーエラー
+				} else {
+					エラーが発生しました
+				}
+			</h1>
+			<p class="mt-2 text-gray-600">{ message }</p>
+			<div class="mt-8">
+				<a href="/" class="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+					トップに戻る
+				</a>
+			</div>
+		</div>
+	</div>
+}

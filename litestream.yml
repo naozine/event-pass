@@ -1,0 +1,14 @@
+dbs:
+  - path: /app/data/app.db
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: ${LITESTREAM_PATH:-replica}
+        endpoint: ${LITESTREAM_R2_ENDPOINT}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+        force-path-style: true
+        sync-interval: 1s
+        snapshot-interval: 24h
+        retention: 72h
+        retention-check-interval: 1h

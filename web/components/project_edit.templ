@@ -1,0 +1,23 @@
+package components
+
+import (
+    "fmt"
+    "github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+)
+
+templ ProjectEdit(project database.Project) {
+    <div class="max-w-xl mx-auto">
+        @PageHeader("プロジェクト編集", "プロジェクトの内容を更新します。")
+
+        <form action={ templ.URL(fmt.Sprintf("/projects/%d/update", project.ID)) } method="POST" class="space-y-6">
+            @FormField("プロジェクト名", "") {
+                @TextInput("name", project.Name, "")
+            }
+
+            @FormFooter() {
+                @CancelLink(templ.URL(fmt.Sprintf("/projects/%d", project.ID)))
+                @PrimaryButton("保存")
+            }
+        </form>
+    </div>
+}

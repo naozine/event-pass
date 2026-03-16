@@ -1,0 +1,41 @@
+# =============================================================================
+# docker-compose.dev.yaml - 開発環境用
+# =============================================================================
+# 使い方:
+#   docker compose -f docker-compose.dev.yaml up
+#
+# 特徴:
+#   - ソースコードをマウントしてホットリロード対応
+#   - Air を使用したライブリロード
+#   - ローカルの .env ファイルを使用
+# =============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: project-crud-auth-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      # ソースコードをマウント
+      - .:/app
+      # Go モジュールキャッシュ
+      - go-mod-cache:/go/pkg/mod
+      # ビルドキャッシュ
+      - go-build-cache:/root/.cache/go-build
+    env_file:
+      - .env
+    environment:
+      - PORT=8080
+      - SERVER_ADDR=http://localhost:8080
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+      - ADMIN_NAME=Admin
+      - WEBAUTHN_RP_ID=localhost
+      - WEBAUTHN_RP_NAME=Project CRUD (Dev)
+      - WEBAUTHN_ALLOWED_ORIGINS=http://localhost:8080
+
+volumes:
+  go-mod-cache:
+  go-build-cache:

@@ -1,0 +1,106 @@
+package components
+
+import (
+    "fmt"
+    "github.com/naozine/project_crud_with_auth_tmpl/internal/models"
+)
+
+templ AdminUserImport(result *models.ImportResult) {
+    <div class="max-w-2xl mx-auto">
+        @PageHeader("ユーザー一括インポート", "Excel ファイル（.xlsx）からユーザーを一括登録します。")
+
+        if result != nil {
+            @importResult(result)
+        }
+
+        <form action="/admin/users/import" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium leading-6 text-gray-900">Excel ファイル</label>
+                <div class="mt-2">
+                    <input type="file" name="file" accept=".xlsx" required
+                        class="block w-full text-sm text-gray-900 file:mr-4 file:py-2.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-black file:text-white hover:file:bg-gray-800 file:cursor-pointer file:transition-colors"
+                    />
+                </div>
+                <p class="mt-2 text-xs text-gray-500">
+                    .xlsx 形式、最大5MB、1000件まで
+                </p>
+            </div>
+
+            <div class="rounded-md bg-gray-50 p-4">
+                <h3 class="text-sm font-medium text-gray-900">Excel フォーマット</h3>
+                <div class="mt-2 overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="py-1 pr-4 text-left font-medium text-gray-700">A列: 名前</th>
+                                <th class="py-1 pr-4 text-left font-medium text-gray-700">B列: メールアドレス</th>
+                                <th class="py-1 text-left font-medium text-gray-700">C列: ロール</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="py-1 pr-4 text-gray-500">田中太郎</td>
+                                <td class="py-1 pr-4 text-gray-500">tanaka@example.com</td>
+                                <td class="py-1 text-gray-500">viewer</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="mt-2 text-xs text-gray-500">ロール: viewer / editor / admin（1行目はヘッダー行）</p>
+            </div>
+
+            @FormFooter() {
+                <a href="/admin/users/import/template" class="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700">テンプレートをダウンロード</a>
+                @PrimaryButton("インポート実行")
+            }
+        </form>
+    </div>
+}
+
+templ importResult(result *models.ImportResult) {
+    if result.SuccessCount > 0 {
+        <div class="mb-6">
+            @AlertSuccess(fmt.Sprintf("%d件のユーザーを登録しました。", result.SuccessCount))
+        </div>
+    }
+
+    if len(result.Errors) > 0 {
+        <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-4">
+            <div class="text-sm font-medium text-red-800 mb-2">
+                { fmt.Sprintf("%d", len(result.Errors)) }件のエラーがあります
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-red-200">
+                            <th class="py-1 pr-4 text-left font-medium text-red-700">行</th>
+                            <th class="py-1 text-left font-medium text-red-700">エラー内容</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        for _, e := range result.Errors {
+                            <tr class="border-b border-red-100">
+                                <td class="py-1 pr-4 text-red-600">
+                                    if e.Row > 0 {
+                                        { fmt.Sprintf("%d", e.Row) }
+                                    } else {
+                                        -
+                                    }
+                                </td>
+                                <td class="py-1 text-red-600">{ e.Message }</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+
+    if result.SuccessCount > 0 {
+        <div class="mb-6">
+            <a href="/admin/users" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800">
+                ユーザー一覧を確認 →
+            </a>
+        </div>
+    }
+}

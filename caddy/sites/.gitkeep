@@ -1,0 +1,6 @@
+# このディレクトリにアプリごとの Caddy 設定ファイルが配置されます。
+# 例: myapp.caddy
+#
+# myapp.example.com {
+#     reverse_proxy myapp:8080
+# }

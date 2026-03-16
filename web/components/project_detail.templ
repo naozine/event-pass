@@ -1,0 +1,38 @@
+package components
+
+import (
+    "fmt"
+    "github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+    "github.com/naozine/project_crud_with_auth_tmpl/internal/appcontext"
+)
+
+templ ProjectDetail(project database.Project) {
+    {{
+        userRole := appcontext.GetUserRole(ctx)
+    }}
+    <div class="max-w-3xl mx-auto">
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold tracking-tight text-gray-900">{ project.Name }</h2>
+                <p class="mt-1 text-sm text-gray-500">ID: { fmt.Sprintf("%d", project.ID) } • 作成日: { project.CreatedAt.Time.Format("2006/01/02 15:04") }</p>
+            </div>
+            if userRole == "admin" || userRole == "editor" {
+                <div class="flex space-x-3">
+                    @SecondaryLink("編集", templ.URL(fmt.Sprintf("/projects/%d/edit", project.ID)))
+                    <form action={ templ.URL(fmt.Sprintf("/projects/%d/delete", project.ID)) } method="POST" onsubmit="return confirm('本当に削除しますか？');">
+                        @DangerSolidButton("削除")
+                    </form>
+                </div>
+            }
+        </div>
+
+        @Card() {
+            <h3 class="text-base font-semibold leading-6 text-gray-900">プロジェクト詳細</h3>
+            <div class="mt-2 max-w-xl text-sm text-gray-500">
+                <p>現在、このプロジェクトには追加の詳細情報はありません。</p>
+            </div>
+        }
+
+        @BackLink("一覧に戻る", "/projects")
+    </div>
+}

@@ -1,0 +1,70 @@
+package components
+
+// FormField はラベル付きのフォームフィールドを描画する。
+// children にはインプットやセレクトなど任意の要素を渡せる。
+templ FormField(label string, helpText string) {
+    <div>
+        <label class="block text-sm font-medium leading-6 text-gray-900">{ label }</label>
+        <div class="mt-2">
+            { children... }
+        </div>
+        if helpText != "" {
+            <p class="mt-2 text-xs text-gray-500">{ helpText }</p>
+        }
+    </div>
+}
+
+// TextInput は標準のテキスト入力フィールドを描画する。
+templ TextInput(name string, value string, placeholder string) {
+    <input type="text" name={ name } id={ name } value={ value } required
+        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+        placeholder={ placeholder }
+    />
+}
+
+// EmailInput はメールアドレス入力フィールドを描画する。
+templ EmailInput(name string, value string, placeholder string) {
+    <input type="email" name={ name } id={ name } value={ value } required
+        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+        placeholder={ placeholder }
+    />
+}
+
+// ReadOnlyField は変更不可の表示専用フィールドを描画する。
+templ ReadOnlyField(value string) {
+    <input type="text" disabled value={ value }
+        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 sm:text-sm sm:leading-6"
+    />
+}
+
+// ReadOnlyRoleField はロールを日本語で表示する読み取り専用フィールドを描画する。
+templ ReadOnlyRoleField(role string) {
+    <div class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 bg-gray-50 sm:text-sm sm:leading-6">
+        if role == "admin" {
+            <span>管理者 (Admin)</span>
+        } else if role == "editor" {
+            <span>編集者 (Editor)</span>
+        } else {
+            <span>閲覧者 (Viewer)</span>
+        }
+    </div>
+}
+
+// RoleSelect はロール選択のセレクトボックスを描画する。
+templ RoleSelect(name string, selected string) {
+    <select id={ name } name={ name }
+        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:max-w-xs sm:text-sm sm:leading-6">
+        <option value="viewer" selected?={ selected == "viewer" }>Viewer（閲覧のみ）</option>
+        <option value="editor" selected?={ selected == "editor" }>Editor（編集可能）</option>
+        <option value="admin" selected?={ selected == "admin" }>Admin（管理者）</option>
+    </select>
+}
+
+// StatusSelect は有効/無効の選択ボックスを描画する。
+templ StatusSelect(name string, isActive bool) {
+    <select id={ name } name={ name }
+        class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:max-w-xs sm:text-sm sm:leading-6">
+        <option value="active" selected?={ isActive }>有効</option>
+        <option value="inactive" selected?={ !isActive }>無効（ログイン不可）</option>
+    </select>
+}

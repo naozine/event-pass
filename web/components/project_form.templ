@@ -1,0 +1,18 @@
+package components
+
+templ ProjectForm() {
+    <div class="max-w-xl mx-auto">
+        @PageHeader("新規プロジェクト作成", "進捗を管理するための新しいプロジェクトを開始します。")
+
+        <form action="/projects/new" method="POST" class="space-y-6">
+            @FormField("プロジェクト名", "プロジェクトを識別できるユニークな名前を入力してください。") {
+                @TextInput("name", "", "例: Webサイトリニューアル")
+            }
+
+            @FormFooter() {
+                @CancelLink("/projects")
+                @PrimaryButton("作成")
+            }
+        </form>
+    </div>
+}

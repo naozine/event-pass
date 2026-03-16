@@ -1,0 +1,119 @@
+package components
+
+// PageHeader はページタイトルと説明文を描画する。
+templ PageHeader(title string, description string) {
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold tracking-tight text-gray-900">{ title }</h2>
+        if description != "" {
+            <p class="mt-2 text-sm text-gray-500">{ description }</p>
+        }
+    </div>
+}
+
+// ListPageHeader はリストページ用のヘッダーを描画する。
+// タイトル + 説明を左に、アクションボタン（children）を右に配置する。
+templ ListPageHeader(title string, description string) {
+    <div class="flex justify-between items-end">
+        <div>
+            <h2 class="text-2xl font-bold tracking-tight text-gray-900">{ title }</h2>
+            if description != "" {
+                <p class="mt-1 text-sm text-gray-500">{ description }</p>
+            }
+        </div>
+        { children... }
+    </div>
+}
+
+// EmptyState はデータが空の場合のプレースホルダーを描画する。
+templ EmptyState(message string) {
+    <div class="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
+        <p class="text-gray-500">{ message }</p>
+    </div>
+}
+
+// Card は白背景のカードコンテナを描画する。
+templ Card() {
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
+        <div class="px-4 py-6 sm:p-8">
+            { children... }
+        </div>
+    </div>
+}
+
+// CardWithFooter はフッター付きのカードコンテナを描画する。
+templ CardWithFooter() {
+    <div class="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+        { children... }
+    </div>
+}
+
+// CardBody はカード内のコンテンツ領域を描画する。
+templ CardBody() {
+    <div class="px-4 py-6 sm:p-8">
+        { children... }
+    </div>
+}
+
+// CardFooter はカードのフッター領域を描画する。
+templ CardFooter() {
+    <div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8">
+        { children... }
+    </div>
+}
+
+// FormSection は2カラムのセクションレイアウトを描画する。
+// 左にタイトルと説明、右に children のコンテンツを配置する。
+templ FormSection(title string, description string) {
+    <div class="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-3">
+        <div class="px-4 sm:px-0">
+            <h2 class="text-base font-semibold leading-7 text-gray-900">{ title }</h2>
+            <p class="mt-1 text-sm leading-6 text-gray-600">{ description }</p>
+        </div>
+        <div class="md:col-span-2">
+            { children... }
+        </div>
+    </div>
+}
+
+// AlertSuccess は成功メッセージを描画する。
+templ AlertSuccess(message string) {
+    <div class="rounded-md bg-green-50 border border-green-200 p-4 text-sm text-green-800">
+        { message }
+    </div>
+}
+
+// AlertError はエラーメッセージを描画する。
+templ AlertError(message string) {
+    <div class="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+        { message }
+    </div>
+}
+
+// RoleBadge はロールに応じた色のバッジを描画する。
+templ RoleBadge(role string) {
+    if role == "admin" {
+        <span class="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">Admin</span>
+    } else if role == "editor" {
+        <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">Editor</span>
+    } else {
+        <span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Viewer</span>
+    }
+}
+
+// StatusBadge は有効/無効のステータスバッジを描画する。
+templ StatusBadge(isActive bool) {
+    if isActive {
+        <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">有効</span>
+    } else {
+        <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">無効</span>
+    }
+}
+
+// BackLink は一覧に戻るリンクを描画する。
+templ BackLink(text string, href templ.SafeURL) {
+    <div class="mt-6">
+        <a href={ href } class="text-sm font-medium text-gray-600 hover:text-gray-900">
+            ← { text }
+        </a>
+    </div>
+}

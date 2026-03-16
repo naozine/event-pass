@@ -1,0 +1,58 @@
+# =============================================================================
+# fly.toml - fly.io デプロイ設定
+# =============================================================================
+# 使い方:
+#   1. このファイルを fly.toml にコピー
+#   2. fly secrets set で環境変数を設定
+#   3. make fly-deploy
+#
+# Note: app名は make fly-deploy 実行時にフォルダ名から自動設定されるため、
+#       このファイルでの app 設定は不要です（-a オプションで上書き）
+# =============================================================================
+
+app = "your-app-name"
+primary_region = "nrt"  # 東京リージョン
+
+[env]
+  PORT = "8080"
+  DB_PATH = "/app/data/app.db"
+  # SERVER_ADDR, WEBAUTHN_* はビルド時に自動設定されます
+  # SMTP_* は fly secrets で設定
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[mounts]
+  source = "data"
+  destination = "/app/data"
+
+# =============================================================================
+# 初回セットアップ手順:
+# =============================================================================
+# 1. make fly-setup  (アプリ作成 + ボリューム作成)
+# 2. fly secrets set -a <フォルダ名> \
+#      ADMIN_EMAIL=admin@example.com \
+#      SMTP_HOST=smtp.example.com \
+#      SMTP_PORT=587 \
+#      SMTP_USERNAME=user \
+#      SMTP_PASSWORD=pass \
+#      SMTP_FROM=noreply@example.com
+# 3. make fly-deploy
+# 4. (カスタムドメインを使う場合) make fly-dns-setup
+#
+# ※ SERVER_ADDR, WEBAUTHN_* はビルド時に自動設定されます
+# =============================================================================
