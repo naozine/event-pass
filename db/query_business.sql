@@ -1,3 +1,5 @@
+-- NOTE: Do not use Japanese in sqlc source files (causes code generation bugs)
+
 -- name: ListProjects :many
 SELECT * FROM projects ORDER BY created_at DESC;
 

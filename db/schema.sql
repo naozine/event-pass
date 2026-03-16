@@ -1,3 +1,5 @@
+-- NOTE: Do not use Japanese in sqlc source files (causes code generation bugs)
+
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL UNIQUE,

@@ -1,3 +1,5 @@
+-- NOTE: Do not use Japanese in sqlc source files (causes code generation bugs)
+
 -- name: GetUserByEmail :one
 SELECT * FROM users WHERE email = ? LIMIT 1;
 
