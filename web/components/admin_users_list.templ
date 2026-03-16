@@ -6,7 +6,7 @@ import (
 )
 
 templ AdminUserList(users []database.User) {
-    <div class="space-y-6">
+    <div class="max-w-5xl mx-auto space-y-6">
         @ListPageHeader("ユーザー管理", "システムにログイン可能なユーザーの一覧です。") {
             <div class="flex gap-3">
                 @SecondaryLink("一括インポート", "/admin/users/import")

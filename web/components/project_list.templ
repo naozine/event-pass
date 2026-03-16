@@ -10,7 +10,7 @@ templ ProjectList(projects []database.Project) {
     {{
         userRole := appcontext.GetUserRole(ctx)
     }}
-    <div class="space-y-6">
+    <div class="max-w-5xl mx-auto space-y-6">
         @ListPageHeader("プロジェクト", "進行中のプロジェクトを管理します。") {
             if userRole == "admin" || userRole == "editor" {
                 @PrimaryLink("新規作成", "/projects/new")

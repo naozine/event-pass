@@ -40,7 +40,7 @@ templ Base(title string, content templ.Component) {
 
             <!-- Navigation with Alpine.js for drawer menu -->
 			<nav x-data="{ open: false }" class="bg-white border-b border-gray-200 sticky top-0 z-50">
-				<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+				<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 					<div class="flex justify-between h-16">
 						<div class="flex items-center">
                             if isLoggedIn {
@@ -129,7 +129,7 @@ templ Base(title string, content templ.Component) {
                     </div>
                 }
 			</nav>
-			<main class="max-w-5xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
+			<main class="py-10 px-4 sm:px-6 lg:px-8">
 				@content
 			</main>
 		</body>
