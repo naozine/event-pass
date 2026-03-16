@@ -13,9 +13,6 @@ templ Base(title string, content templ.Component) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
-			<!-- htmx: ページ遷移の置き換えには使わない。検索・バリデーション・トグル等の部分更新のみ -->
-			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-			<script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
 			<script src="https://cdn.tailwindcss.com"></script>
             <!-- WebAuthn Scripts -->
             <script src="/webauthn/static/webauthn.js"></script>

@@ -16,33 +16,44 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
-// HTMX Login Form Handler
-document.body.addEventListener('htmx:afterRequest', function(evt) {
-    if (evt.detail.elt.id !== 'login-form') return;
+// Login Form Handler (fetch)
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('login-form');
+    if (!form) return;
 
-    try {
-        const resp = JSON.parse(evt.detail.xhr.responseText);
-        const msgDiv = document.getElementById('auth-messages');
-        if (!msgDiv) return;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
 
-        msgDiv.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-green-50', 'text-green-700');
+        try {
+            const res = await fetch('/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            });
+            const resp = await res.json();
+            const msgDiv = document.getElementById('auth-messages');
+            if (!msgDiv) return;
 
-        if (evt.detail.successful) {
-            msgDiv.classList.add('bg-green-50', 'text-green-700');
-            if (resp.magic_link) {
-                msgDiv.innerHTML = '<p class="font-bold mb-2">' + resp.message + '</p>' +
-                    '<a href="' + resp.magic_link + '" class="underline break-all hover:text-green-900">ログインリンクをクリックして続行</a>';
+            msgDiv.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-green-50', 'text-green-700');
+
+            if (res.ok) {
+                msgDiv.classList.add('bg-green-50', 'text-green-700');
+                if (resp.magic_link) {
+                    msgDiv.innerHTML = '<p class="font-bold mb-2">' + resp.message + '</p>' +
+                        '<a href="' + resp.magic_link + '" class="underline break-all hover:text-green-900">ログインリンクをクリックして続行</a>';
+                } else {
+                    msgDiv.textContent = resp.message;
+                }
             } else {
-                msgDiv.textContent = resp.message;
+                msgDiv.classList.add('bg-red-50', 'text-red-700');
+                msgDiv.textContent = resp.error || "エラーが発生しました。";
             }
-        } else {
-            msgDiv.classList.add('bg-red-50', 'text-red-700');
-            msgDiv.textContent = resp.error || "エラーが発生しました。";
+            msgDiv.classList.remove('hidden');
+        } catch (e) {
+            showAuthMessage("エラーが発生しました。", true);
         }
-        msgDiv.classList.remove('hidden');
-    } catch (e) {
-        console.error("Failed to parse response", e);
-    }
+    });
 });
 
 // Helper to show messages (on login page)

@@ -7,7 +7,7 @@ templ LoginForm(errorMessage string) {
             <p class="mt-2 text-sm text-gray-500">メールアドレスを入力してマジックリンクを受け取ってください。</p>
         </div>
 
-        <form id="login-form" hx-post="/auth/login" hx-ext="json-enc" hx-swap="none" class="space-y-6">
+        <form id="login-form" class="space-y-6">
             @FormField("メールアドレス", "") {
                 <input type="email" name="email" id="email" required
                     autocomplete="username webauthn"
