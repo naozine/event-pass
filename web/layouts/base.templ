@@ -13,9 +13,10 @@ templ Base(title string, content templ.Component) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ title }</title>
+			<!-- htmx: ページ遷移の置き換えには使わない。検索・バリデーション・トグル等の部分更新のみ -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 			<script src="https://unpkg.com/htmx.org/dist/ext/json-enc.js"></script>
-            <!-- Alpine.js: Used strictly for UI state management (menu toggle) per GEMINI.md guidelines -->
+            <!-- Alpine.js: UI state management (menu toggle) のみに使用 -->
             <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 			<script src="https://cdn.tailwindcss.com"></script>
             <!-- WebAuthn Scripts -->

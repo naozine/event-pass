@@ -8,6 +8,7 @@ import (
 )
 
 // RegisterBusinessRoutes はビジネスロジックのルートを登録する（派生プロジェクトでカスタマイズ可）。
+// 新機能を追加する際は projects の実装（handlers, routes, templ）を参考にする。
 // authMW は認証ミドルウェアで、本番では RequireAuth(ml, ...)、テストではスタブを渡す。
 func RegisterBusinessRoutes(e *echo.Echo, queries *database.Queries, authMW echo.MiddlewareFunc) {
 	projectHandler := handlers.NewProjectHandler(queries)
