@@ -53,25 +53,27 @@ templ timetableGrid(tt models.Timetable) {
 			</div>
 		}
 
-		<!-- Time labels on left -->
-		for _, timeSlot := range tt.TimeSlots {
+		<!-- Time labels and guide lines every 10 minutes -->
+		{{
+			eventTimeSet := map[string]bool{}
+			for _, ts := range tt.TimeSlots {
+				eventTimeSet[ts] = true
+			}
+			tickLabels := genTickLabels(tt.StartMinute, tt.EndMinute, 10, eventTimeSet)
+		}}
+		for _, tick := range tickLabels {
 			{{
-				slotMin := parseMinutesTempl(timeSlot)
-				rowStart := slotMin - tt.StartMinute + 2
+				rowStart := tick.Minute - tt.StartMinute + 2
 			}}
-			<div class="sticky left-0 z-10 bg-gray-50 border-l border-gray-200 px-2 flex items-start pt-0.5 text-xs font-medium text-gray-700"
+			<div class="sticky left-0 z-10 bg-gray-50 border-l border-gray-200 px-2 flex items-start pt-0.5 text-xs text-gray-700"
 				style={ fmt.Sprintf("grid-column:1;grid-row:%d", rowStart) }>
-				{ timeSlot }
+				if tick.IsEvent {
+					<span class="font-semibold">{ tick.Label }</span>
+				} else {
+					<span class="text-gray-300">{ tick.Label }</span>
+				}
 			</div>
-		}
-
-		<!-- Horizontal guide lines for each time slot -->
-		for _, timeSlot := range tt.TimeSlots {
-			{{
-				slotMin := parseMinutesTempl(timeSlot)
-				rowStart := slotMin - tt.StartMinute + 2
-			}}
-			<div class="border-t border-gray-200"
+			<div class={ templ.KV("border-t", true), templ.KV("border-gray-200", tick.IsEvent), templ.KV("border-gray-100", !tick.IsEvent) }
 				style={ fmt.Sprintf("grid-column:2/%d;grid-row:%d", len(tt.Rooms)+2, rowStart) }>
 			</div>
 		}
@@ -93,6 +95,27 @@ templ timetableGrid(tt models.Timetable) {
 			}
 		}
 	</div>
+}
+
+type tickLabel struct {
+	Label   string
+	Minute  int
+	IsEvent bool // true if this time matches an event start/end
+}
+
+func genTickLabels(startMin, endMin, interval int, eventTimes map[string]bool) []tickLabel {
+	// Round start down to nearest interval
+	first := (startMin / interval) * interval
+	var labels []tickLabel
+	for m := first; m <= endMin; m += interval {
+		label := fmt.Sprintf("%02d:%02d", m/60, m%60)
+		labels = append(labels, tickLabel{
+			Label:   label,
+			Minute:  m,
+			IsEvent: eventTimes[label],
+		})
+	}
+	return labels
 }
 
 func parseMinutesTempl(hhmm string) int {
