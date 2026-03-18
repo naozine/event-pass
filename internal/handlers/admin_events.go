@@ -29,11 +29,11 @@ func (h *EventHandler) ListEvents(c echo.Context) error {
 		logger.Error("failed to list events", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load events")
 	}
-	return renderPage(c, "Events", components.AdminEventList(events))
+	return renderPage(c, "イベント管理", components.AdminEventList(events))
 }
 
 func (h *EventHandler) NewEventPage(c echo.Context) error {
-	return renderPage(c, "New Event", components.AdminEventForm(nil))
+	return renderPage(c, "新規イベント", components.AdminEventForm(nil))
 }
 
 func (h *EventHandler) CreateEvent(c echo.Context) error {
@@ -45,11 +45,14 @@ func (h *EventHandler) CreateEvent(c echo.Context) error {
 	}
 
 	_, err = h.Queries.CreateEvent(ctx, database.CreateEventParams{
+		Code:         params.Code,
 		Title:        params.Title,
 		Description:  params.Description,
 		Venue:        params.Venue,
 		EventDate:    params.EventDate,
 		Capacity:     params.Capacity,
+		ColorBg:      params.ColorBg,
+		ColorText:    params.ColorText,
 		IsPublished:  params.IsPublished,
 		CustomFields: params.CustomFields,
 	})
@@ -94,7 +97,7 @@ func (h *EventHandler) EditEventPage(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Event not found")
 	}
 
-	return renderPage(c, "Edit: "+event.Title, components.AdminEventForm(&event))
+	return renderPage(c, "編集: "+event.Title, components.AdminEventForm(&event))
 }
 
 func (h *EventHandler) UpdateEvent(c echo.Context) error {
@@ -111,11 +114,14 @@ func (h *EventHandler) UpdateEvent(c echo.Context) error {
 
 	_, err = h.Queries.UpdateEvent(ctx, database.UpdateEventParams{
 		ID:           id,
+		Code:         params.Code,
 		Title:        params.Title,
 		Description:  params.Description,
 		Venue:        params.Venue,
 		EventDate:    params.EventDate,
 		Capacity:     params.Capacity,
+		ColorBg:      params.ColorBg,
+		ColorText:    params.ColorText,
 		IsPublished:  params.IsPublished,
 		CustomFields: params.CustomFields,
 	})
@@ -157,11 +163,14 @@ func (h *EventHandler) TogglePublish(c echo.Context) error {
 
 	_, err = h.Queries.UpdateEvent(ctx, database.UpdateEventParams{
 		ID:           id,
+		Code:         event.Code,
 		Title:        event.Title,
 		Description:  event.Description,
 		Venue:        event.Venue,
 		EventDate:    event.EventDate,
 		Capacity:     event.Capacity,
+		ColorBg:      event.ColorBg,
+		ColorText:    event.ColorText,
 		IsPublished:  !event.IsPublished,
 		CustomFields: event.CustomFields,
 	})
@@ -174,11 +183,14 @@ func (h *EventHandler) TogglePublish(c echo.Context) error {
 }
 
 type eventFormParams struct {
+	Code         string
 	Title        string
 	Description  string
 	Venue        string
 	EventDate    time.Time
 	Capacity     int64
+	ColorBg      string
+	ColorText    string
 	IsPublished  bool
 	CustomFields string
 }
@@ -220,12 +232,24 @@ func parseEventForm(c echo.Context) (eventFormParams, error) {
 		}
 	}
 
+	colorBg := c.FormValue("color_bg")
+	if colorBg == "" {
+		colorBg = "#000000"
+	}
+	colorText := c.FormValue("color_text")
+	if colorText == "" {
+		colorText = "#ffffff"
+	}
+
 	return eventFormParams{
+		Code:         c.FormValue("code"),
 		Title:        title,
 		Description:  c.FormValue("description"),
 		Venue:        c.FormValue("venue"),
 		EventDate:    eventDate,
 		Capacity:     capacity,
+		ColorBg:      colorBg,
+		ColorText:    colorText,
 		IsPublished:  isPublished,
 		CustomFields: customFieldsJSON,
 	}, nil

@@ -10,34 +10,34 @@ templ RegistrationConfirm(event database.Event) {
 					<path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"></path>
 				</svg>
 			</div>
-			<h2 class="mt-4 text-2xl font-bold tracking-tight text-gray-900">Registration Complete!</h2>
+			<h2 class="mt-4 text-2xl font-bold tracking-tight text-gray-900">登録が完了しました</h2>
 			<p class="mt-2 text-sm text-gray-500">
-				You have successfully registered for <span class="font-medium text-gray-900">{ event.Title }</span>.
+				<span class="font-medium text-gray-900">{ event.Title }</span> への参加登録が完了しました。
 			</p>
 		</div>
 
 		@Card() {
 			<dl class="space-y-3 text-sm">
 				<div class="flex justify-between">
-					<dt class="text-gray-500">Event</dt>
+					<dt class="text-gray-500">イベント</dt>
 					<dd class="text-gray-900 font-medium">{ event.Title }</dd>
 				</div>
 				<div class="flex justify-between">
-					<dt class="text-gray-500">Date</dt>
-					<dd class="text-gray-900">{ event.EventDate.Format("Jan 2, 2006 3:04 PM") }</dd>
+					<dt class="text-gray-500">日時</dt>
+					<dd class="text-gray-900">{ event.EventDate.Format("2006年1月2日 15:04") }</dd>
 				</div>
 				<div class="flex justify-between">
-					<dt class="text-gray-500">Venue</dt>
+					<dt class="text-gray-500">会場</dt>
 					<dd class="text-gray-900">{ event.Venue }</dd>
 				</div>
 			</dl>
 		}
 
 		<div class="mt-8 space-y-3">
-			<p class="text-sm text-gray-500">Log in to view your event pass and manage your registrations.</p>
+			<p class="text-sm text-gray-500">ログインするとイベントパスの確認や登録の管理ができます。</p>
 			<div class="flex justify-center gap-x-4">
-				@PrimaryLink("Log In", "/auth/login")
-				@SecondaryLink("Back to Events", "/events")
+				@PrimaryLink("ログイン", "/auth/login")
+				@SecondaryLink("イベント一覧に戻る", "/events")
 			</div>
 		</div>
 	</div>

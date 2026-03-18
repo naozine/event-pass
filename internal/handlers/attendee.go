@@ -30,7 +30,7 @@ func (h *AttendeeHandler) MyRegistrations(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load registrations")
 	}
 
-	return renderPage(c, "My Registrations", components.MyRegistrations(registrations))
+	return renderPage(c, "参加登録一覧", components.MyRegistrations(registrations))
 }
 
 func (h *AttendeeHandler) ShowPass(c echo.Context) error {
@@ -56,7 +56,7 @@ func (h *AttendeeHandler) ShowPass(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Event not found")
 	}
 
-	return renderPage(c, "Event Pass", components.DigitalPass(event, reg))
+	return renderPage(c, "イベントパス", components.DigitalPass(event, reg))
 }
 
 func (h *AttendeeHandler) CancelRegistration(c echo.Context) error {

@@ -7,10 +7,10 @@ import (
 
 templ EventList(events []database.Event) {
 	<div class="max-w-5xl mx-auto space-y-6">
-		@PageHeader("Upcoming Events", "Browse and register for upcoming events.")
+		@PageHeader("開催予定のイベント", "イベントを閲覧して参加登録できます。")
 
 		if len(events) == 0 {
-			@EmptyState("No upcoming events at the moment. Check back later!")
+			@EmptyState("現在、開催予定のイベントはありません。")
 		} else {
 			<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 				for _, e := range events {
@@ -21,9 +21,9 @@ templ EventList(events []database.Event) {
 								<p class="mt-2 text-sm text-gray-500">{ e.Venue }</p>
 							</div>
 							<div class="pt-4 border-t border-gray-100">
-								<p class="text-sm font-medium text-gray-700">{ e.EventDate.Format("Jan 2, 2006 3:04 PM") }</p>
+								<p class="text-sm font-medium text-gray-700">{ e.EventDate.Format("2006年1月2日 15:04") }</p>
 								if e.Capacity > 0 {
-									<p class="mt-1 text-xs text-gray-400">Capacity: { fmt.Sprintf("%d", e.Capacity) }</p>
+									<p class="mt-1 text-xs text-gray-400">定員: { fmt.Sprintf("%d", e.Capacity) }名</p>
 								}
 							</div>
 						</div>

@@ -28,7 +28,7 @@ func (h *PublicEventHandler) ListUpcomingEvents(c echo.Context) error {
 		logger.Error("failed to list published events", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load events")
 	}
-	return renderPage(c, "Events", components.EventList(events))
+	return renderPage(c, "イベント一覧", components.EventList(events))
 }
 
 func (h *PublicEventHandler) ShowEventDetail(c echo.Context) error {
@@ -82,7 +82,7 @@ func (h *PublicEventHandler) ShowRegistrationForm(c echo.Context) error {
 		}
 	}
 
-	return renderPage(c, "Register for "+event.Title, components.RegistrationForm(event, name, email, ""))
+	return renderPage(c, event.Title+" への参加登録", components.RegistrationForm(event, name, email, ""))
 }
 
 func (h *PublicEventHandler) SubmitRegistration(c echo.Context) error {
@@ -101,7 +101,7 @@ func (h *PublicEventHandler) SubmitRegistration(c echo.Context) error {
 	email := c.FormValue("email")
 
 	if name == "" || email == "" {
-		return renderPage(c, "Register for "+event.Title, components.RegistrationForm(event, name, email, "Name and email are required."))
+		return renderPage(c, event.Title+" への参加登録", components.RegistrationForm(event, name, email, "お名前とメールアドレスは必須です。"))
 	}
 
 	// Check capacity
@@ -112,7 +112,7 @@ func (h *PublicEventHandler) SubmitRegistration(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to process registration")
 		}
 		if regCount >= event.Capacity {
-			return renderPage(c, "Register for "+event.Title, components.RegistrationForm(event, name, email, "This event is full."))
+			return renderPage(c, event.Title+" への参加登録", components.RegistrationForm(event, name, email, "このイベントは満席です。"))
 		}
 	}
 
@@ -142,7 +142,7 @@ func (h *PublicEventHandler) SubmitRegistration(c echo.Context) error {
 		UserID:  user.ID,
 	})
 	if err == nil {
-		return renderPage(c, "Register for "+event.Title, components.RegistrationForm(event, name, email, "You have already registered for this event."))
+		return renderPage(c, event.Title+" への参加登録", components.RegistrationForm(event, name, email, "このイベントには既に登録済みです。"))
 	}
 
 	// Create registration
@@ -172,5 +172,5 @@ func (h *PublicEventHandler) RegistrationConfirm(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusNotFound, "Event not found")
 	}
 
-	return renderPage(c, "Registration Complete", components.RegistrationConfirm(event))
+	return renderPage(c, "登録完了", components.RegistrationConfirm(event))
 }

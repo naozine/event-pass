@@ -8,7 +8,7 @@ import (
 
 templ Base(title string, content templ.Component) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang="ja">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -49,12 +49,12 @@ templ Base(title string, content templ.Component) {
                                 <div class="hidden sm:flex items-center">
                                     <form action="/auth/logout" method="POST">
                                         <button type="submit" class="text-sm text-red-600 hover:text-red-800 font-medium">
-                                            Log out
+                                            ログアウト
                                         </button>
                                     </form>
                                 </div>
                             } else {
-                                <a href="/auth/login" class="text-sm font-medium text-gray-700 hover:text-gray-900">Log in</a>
+                                <a href="/auth/login" class="text-sm font-medium text-gray-700 hover:text-gray-900">ログイン</a>
                             }
                         </div>
 					</div>
@@ -70,31 +70,31 @@ templ Base(title string, content templ.Component) {
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
                                     </svg>
                                 </button>
-                                <h2 class="text-base font-semibold leading-6 text-gray-900">Menu</h2>
+                                <h2 class="text-base font-semibold leading-6 text-gray-900">メニュー</h2>
                             </div>
                             <div class="relative mt-6 flex-1 px-4 sm:px-6">
                                 <div class="flex flex-col space-y-1">
-                                    <a href="/events" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">Events</a>
-                                    <a href="/my" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">My Registrations</a>
+                                    <a href="/events" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">イベント一覧</a>
+                                    <a href="/my" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">参加登録一覧</a>
                                     if userRole == "admin" {
                                         <div class="mt-4 pt-4 border-t border-gray-200">
-                                            <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">Admin</p>
-                                            <a href="/admin/dashboard" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">Dashboard</a>
-                                            <a href="/admin/events" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">Manage Events</a>
-                                            <a href="/admin/users" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">Users</a>
+                                            <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider">管理</p>
+                                            <a href="/admin/dashboard" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">ダッシュボード</a>
+                                            <a href="/admin/events" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">イベント管理</a>
+                                            <a href="/admin/users" class="block rounded-md px-3 py-2 text-base font-medium text-gray-900 hover:bg-gray-50">ユーザー管理</a>
                                         </div>
                                     }
                                 </div>
 
                                 <div class="mt-8 pt-6 border-t border-gray-200">
                                      <div class="px-3 mb-4">
-                                        <p class="text-sm font-medium text-gray-500">Signed in as:</p>
+                                        <p class="text-sm font-medium text-gray-500">ログイン中：</p>
                                         <a href="/profile" class="block text-sm font-medium text-gray-900 truncate hover:text-indigo-600 hover:underline">{ userEmail }</a>
                                      </div>
                                      <div class="flex flex-col space-y-3 px-3">
                                          <form action="/auth/logout" method="POST">
                                              <button type="submit" class="w-full text-center rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100">
-                                                 Log out
+                                                 ログアウト
                                              </button>
                                          </form>
                                      </div>

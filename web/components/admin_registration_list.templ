@@ -7,22 +7,22 @@ import (
 
 templ AdminRegistrationList(event database.Event, registrations []database.ListRegistrationsByEventRow) {
 	<div class="max-w-5xl mx-auto space-y-6">
-		@ListPageHeader("Registrations: "+event.Title, fmt.Sprintf("%d registrations", len(registrations))) {
-			@SecondaryLink("Export CSV", templ.URL(fmt.Sprintf("/admin/events/%d/registrations/csv", event.ID)))
+		@ListPageHeader(event.Title+" の登録一覧", fmt.Sprintf("%d 件の登録", len(registrations))) {
+			@SecondaryLink("CSV出力", templ.URL(fmt.Sprintf("/admin/events/%d/registrations/csv", event.ID)))
 		}
 
 		if len(registrations) == 0 {
-			@EmptyState("No registrations yet for this event.")
+			@EmptyState("このイベントにはまだ登録がありません。")
 		} else {
 			<div class="overflow-hidden rounded-lg border border-gray-200 bg-white">
 				<table class="min-w-full divide-y divide-gray-200">
 					<thead class="bg-gray-50">
 						<tr>
-							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-							<th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">名前</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">メール</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">登録日</th>
+							<th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200">
@@ -32,24 +32,24 @@ templ AdminRegistrationList(event database.Event, registrations []database.ListR
 								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ r.UserEmail }</td>
 								<td class="px-6 py-4 whitespace-nowrap">
 									if r.Status == "registered" {
-										<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Registered</span>
+										<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">登録済み</span>
 									} else {
-										<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Cancelled</span>
+										<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">キャンセル済み</span>
 									}
 								</td>
 								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
 									if r.CreatedAt.Valid {
-										{ r.CreatedAt.Time.Format("Jan 2, 2006") }
+										{ r.CreatedAt.Time.Format("2006/1/2") }
 									}
 								</td>
 								<td class="px-6 py-4 whitespace-nowrap text-right text-sm">
 									<form action={ templ.URL(fmt.Sprintf("/admin/events/%d/registrations/%d/status", event.ID, r.ID)) } method="POST" class="inline">
 										if r.Status == "registered" {
 											<input type="hidden" name="status" value="cancelled"/>
-											<button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">Cancel</button>
+											<button type="submit" class="text-red-600 hover:text-red-800 text-xs font-medium">キャンセル</button>
 										} else {
 											<input type="hidden" name="status" value="registered"/>
-											<button type="submit" class="text-green-600 hover:text-green-800 text-xs font-medium">Restore</button>
+											<button type="submit" class="text-green-600 hover:text-green-800 text-xs font-medium">復元</button>
 										}
 									</form>
 								</td>
@@ -60,6 +60,6 @@ templ AdminRegistrationList(event database.Event, registrations []database.ListR
 			</div>
 		}
 
-		@BackLink("Back to Event", templ.URL(fmt.Sprintf("/admin/events/%d", event.ID)))
+		@BackLink("イベントに戻る", templ.URL(fmt.Sprintf("/admin/events/%d", event.ID)))
 	</div>
 }

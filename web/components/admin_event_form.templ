@@ -9,9 +9,9 @@ import (
 templ AdminEventForm(event *database.Event) {
 	<div class="max-w-xl mx-auto">
 		if event == nil {
-			@PageHeader("New Event", "Create a new event for attendees to register.")
+			@PageHeader("新規イベント", "参加者が登録できるイベントを作成します。")
 		} else {
-			@PageHeader("Edit Event", "Update the event details.")
+			@PageHeader("イベント編集", "イベントの詳細を更新します。")
 		}
 
 		if event == nil {
@@ -19,7 +19,7 @@ templ AdminEventForm(event *database.Event) {
 				@eventFormFields(nil)
 				@FormFooter() {
 					@CancelLink("/admin/events")
-					@PrimaryButton("Create")
+					@PrimaryButton("作成")
 				}
 			</form>
 		} else {
@@ -27,7 +27,7 @@ templ AdminEventForm(event *database.Event) {
 				@eventFormFields(event)
 				@FormFooter() {
 					@CancelLink(templ.URL(fmt.Sprintf("/admin/events/%d", event.ID)))
-					@PrimaryButton("Save")
+					@PrimaryButton("保存")
 				}
 			</form>
 		}
@@ -36,37 +36,60 @@ templ AdminEventForm(event *database.Event) {
 
 templ eventFormFields(event *database.Event) {
 	{{
-		var title, description, venue, eventDate string
+		var code, title, description, venue, eventDate string
 		var capacity string
+		var colorBg, colorText string
 		var isPublished bool
+		colorBg = "#000000"
+		colorText = "#ffffff"
 		if event != nil {
+			code = event.Code
 			title = event.Title
 			description = event.Description
 			venue = event.Venue
 			eventDate = event.EventDate.Format("2006-01-02T15:04")
 			capacity = fmt.Sprintf("%d", event.Capacity)
+			colorBg = event.ColorBg
+			colorText = event.ColorText
 			isPublished = event.IsPublished
 		}
 	}}
-	@FormField("Title", "") {
-		@TextInput("title", title, "e.g. Tech Conference 2026")
+	@FormField("コード", "イベントを識別するユニークなコード（例: T1TH1）") {
+		@TextInput("code", code, "例: T1TH1")
 	}
-	@FormField("Description", "") {
+	@FormField("タイトル", "") {
+		@TextInput("title", title, "例: テックカンファレンス 2026")
+	}
+	@FormField("説明", "") {
 		<textarea name="description" id="description" rows="4"
 			class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
-			placeholder="Describe the event...">{ description }</textarea>
+			placeholder="イベントの説明を入力...">{ description }</textarea>
 	}
-	@FormField("Venue", "") {
-		@TextInput("venue", venue, "e.g. Convention Center, Room A")
+	@FormField("会場", "") {
+		@TextInput("venue", venue, "例: コンベンションセンター A会場")
 	}
-	@FormField("Date & Time", "") {
+	@FormField("日時", "") {
 		<input type="datetime-local" name="event_date" id="event_date" value={ eventDate } required
 			class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"/>
 	}
-	@FormField("Capacity", "Set to 0 for unlimited.") {
+	@FormField("定員", "0 で定員なしになります。") {
 		<input type="number" name="capacity" id="capacity" value={ capacity } min="0"
 			class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
 			placeholder="0"/>
+	}
+	@FormField("配色", "パスのヘッダーに使用する背景色と文字色です。") {
+		<div class="flex items-center gap-4">
+			<div class="flex items-center gap-2">
+				<label for="color_bg" class="text-sm text-gray-600">背景</label>
+				<input type="color" name="color_bg" id="color_bg" value={ colorBg }
+					class="h-10 w-14 rounded border border-gray-300 cursor-pointer"/>
+			</div>
+			<div class="flex items-center gap-2">
+				<label for="color_text" class="text-sm text-gray-600">文字</label>
+				<input type="color" name="color_text" id="color_text" value={ colorText }
+					class="h-10 w-14 rounded border border-gray-300 cursor-pointer"/>
+			</div>
+		</div>
 	}
 	<div class="flex items-center gap-x-3">
 		if isPublished {
@@ -76,7 +99,7 @@ templ eventFormFields(event *database.Event) {
 			<input type="checkbox" name="is_published" id="is_published"
 				class="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"/>
 		}
-		<label for="is_published" class="text-sm font-medium text-gray-900">Published</label>
+		<label for="is_published" class="text-sm font-medium text-gray-900">公開する</label>
 	</div>
 	<!-- Custom Fields -->
 	{{
@@ -85,7 +108,7 @@ templ eventFormFields(event *database.Event) {
 			customFields = models.ParseCustomFields(event.CustomFields)
 		}
 	}}
-	@FormField("Custom Fields", "Additional information displayed on the event pass.") {
+	@FormField("カスタムフィールド", "イベントパスに表示される追加情報です。") {
 		<div id="custom-fields-container" class="space-y-2">
 			for _, f := range customFields {
 				@customFieldRow(f.Key, f.Value)
@@ -95,7 +118,7 @@ templ eventFormFields(event *database.Event) {
 			@customFieldRow("", "")
 		</template>
 		<button type="button" onclick="addCustomField()" class="mt-2 inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200">
-			+ Add Field
+			+ 項目を追加
 		</button>
 		<script>
 			function addCustomField() {
@@ -113,12 +136,12 @@ templ eventFormFields(event *database.Event) {
 
 templ customFieldRow(key, value string) {
 	<div class="custom-field-row flex items-center gap-2">
-		<input type="text" name="custom_field_key" value={ key } placeholder="Label (e.g. Floor)"
+		<input type="text" name="custom_field_key" value={ key } placeholder="ラベル（例: フロア）"
 			class="block w-1/3 rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm"/>
-		<input type="text" name="custom_field_value" value={ value } placeholder="Value (e.g. 3F)"
+		<input type="text" name="custom_field_value" value={ value } placeholder="値（例: 3F）"
 			class="block w-1/2 rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm"/>
 		<button type="button" onclick="removeCustomField(this)" class="text-red-500 hover:text-red-700 text-sm px-2">
-			Remove
+			削除
 		</button>
 	</div>
 }

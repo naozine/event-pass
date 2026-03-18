@@ -7,21 +7,21 @@ import (
 
 templ AdminDashboard(events []database.Event) {
 	<div class="max-w-5xl mx-auto space-y-6">
-		@ListPageHeader("Dashboard", "Overview of your events.") {
-			@PrimaryLink("New Event", "/admin/events/new")
+		@ListPageHeader("ダッシュボード", "イベントの概要を確認できます。") {
+			@PrimaryLink("新規イベント", "/admin/events/new")
 		}
 
 		if len(events) == 0 {
-			@EmptyState("No events yet. Create your first event to get started.")
+			@EmptyState("イベントがまだありません。最初のイベントを作成しましょう。")
 		} else {
 			<div class="overflow-hidden rounded-lg border border-gray-200 bg-white">
 				<table class="min-w-full divide-y divide-gray-200">
 					<thead class="bg-gray-50">
 						<tr>
-							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-							<th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">イベント</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">日付</th>
+							<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</th>
+							<th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200">
@@ -31,16 +31,16 @@ templ AdminDashboard(events []database.Event) {
 									<a href={ templ.URL(fmt.Sprintf("/admin/events/%d", e.ID)) } class="text-sm font-medium text-gray-900 hover:text-indigo-600">{ e.Title }</a>
 									<p class="text-xs text-gray-400">{ e.Venue }</p>
 								</td>
-								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ e.EventDate.Format("Jan 2, 2006") }</td>
+								<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{ e.EventDate.Format("2006/1/2") }</td>
 								<td class="px-6 py-4 whitespace-nowrap">
 									if e.IsPublished {
-										<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Published</span>
+										<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">公開中</span>
 									} else {
-										<span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Draft</span>
+										<span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">下書き</span>
 									}
 								</td>
 								<td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-									<a href={ templ.URL(fmt.Sprintf("/admin/events/%d/registrations", e.ID)) } class="text-indigo-600 hover:text-indigo-900 font-medium">Registrations</a>
+									<a href={ templ.URL(fmt.Sprintf("/admin/events/%d/registrations", e.ID)) } class="text-indigo-600 hover:text-indigo-900 font-medium">登録一覧</a>
 								</td>
 							</tr>
 						}

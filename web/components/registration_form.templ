@@ -7,23 +7,23 @@ import (
 
 templ RegistrationForm(event database.Event, name string, email string, errMsg string) {
 	<div class="max-w-xl mx-auto">
-		@PageHeader("Register for "+event.Title, event.EventDate.Format("Jan 2, 2006 3:04 PM")+" · "+event.Venue)
+		@PageHeader(event.Title+" への参加登録", event.EventDate.Format("2006年1月2日 15:04")+" · "+event.Venue)
 
 		if errMsg != "" {
 			@AlertError(errMsg)
 		}
 
 		<form action={ templ.URL(fmt.Sprintf("/events/%d/register", event.ID)) } method="POST" class="mt-6 space-y-6">
-			@FormField("Name", "") {
-				@TextInput("name", name, "Your full name")
+			@FormField("お名前", "") {
+				@TextInput("name", name, "氏名を入力してください")
 			}
-			@FormField("Email", "We'll use this to send your event pass.") {
+			@FormField("メールアドレス", "イベントパスの送付に使用します。") {
 				@EmailInput("email", email, "you@example.com")
 			}
 
 			@FormFooter() {
 				@CancelLink(templ.URL(fmt.Sprintf("/events/%d", event.ID)))
-				@PrimaryButton("Register")
+				@PrimaryButton("登録する")
 			}
 		</form>
 	</div>

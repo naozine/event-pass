@@ -10,35 +10,35 @@ templ EventDetail(event database.Event, registrationCount int64) {
 		<div class="mb-8">
 			<h2 class="text-2xl font-bold tracking-tight text-gray-900">{ event.Title }</h2>
 			<p class="mt-2 text-sm text-gray-500">
-				{ event.EventDate.Format("Jan 2, 2006 3:04 PM") } &middot; { event.Venue }
+				{ event.EventDate.Format("2006年1月2日 15:04") } &middot; { event.Venue }
 			</p>
 		</div>
 
 		@Card() {
 			if event.Description != "" {
 				<div class="mb-6">
-					<h3 class="text-sm font-medium text-gray-500">About this event</h3>
+					<h3 class="text-sm font-medium text-gray-500">イベント概要</h3>
 					<p class="mt-2 text-sm text-gray-900 whitespace-pre-wrap">{ event.Description }</p>
 				</div>
 			}
 
 			<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
 				<div>
-					<dt class="text-sm font-medium text-gray-500">Date & Time</dt>
-					<dd class="mt-1 text-sm text-gray-900">{ event.EventDate.Format("January 2, 2006 at 3:04 PM") }</dd>
+					<dt class="text-sm font-medium text-gray-500">日時</dt>
+					<dd class="mt-1 text-sm text-gray-900">{ event.EventDate.Format("2006年1月2日 15:04") }</dd>
 				</div>
 				<div>
-					<dt class="text-sm font-medium text-gray-500">Venue</dt>
+					<dt class="text-sm font-medium text-gray-500">会場</dt>
 					<dd class="mt-1 text-sm text-gray-900">{ event.Venue }</dd>
 				</div>
 				if event.Capacity > 0 {
 					<div>
-						<dt class="text-sm font-medium text-gray-500">Availability</dt>
+						<dt class="text-sm font-medium text-gray-500">空き状況</dt>
 						<dd class="mt-1 text-sm text-gray-900">
 							if registrationCount >= event.Capacity {
-								<span class="text-red-600 font-medium">Full</span>
+								<span class="text-red-600 font-medium">満席</span>
 							} else {
-								{ fmt.Sprintf("%d / %d spots taken", registrationCount, event.Capacity) }
+								{ fmt.Sprintf("%d / %d 名登録済み", registrationCount, event.Capacity) }
 							}
 						</dd>
 					</div>
@@ -48,9 +48,9 @@ templ EventDetail(event database.Event, registrationCount int64) {
 
 		<div class="mt-8 flex items-center gap-x-4">
 			if event.Capacity == 0 || registrationCount < event.Capacity {
-				@PrimaryLink("Register Now", templ.URL(fmt.Sprintf("/events/%d/register", event.ID)))
+				@PrimaryLink("参加登録する", templ.URL(fmt.Sprintf("/events/%d/register", event.ID)))
 			}
-			@BackLink("Back to Events", "/events")
+			@BackLink("イベント一覧に戻る", "/events")
 		</div>
 	</div>
 }

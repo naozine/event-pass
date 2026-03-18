@@ -35,15 +35,18 @@ SELECT * FROM events ORDER BY event_date DESC;
 SELECT * FROM events WHERE id = ? LIMIT 1;
 
 -- name: CreateEvent :one
-INSERT INTO events (title, description, venue, event_date, capacity, is_published, custom_fields)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO events (code, title, description, venue, event_date, capacity, color_bg, color_text, is_published, custom_fields)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: UpdateEvent :one
 UPDATE events
-SET title = ?, description = ?, venue = ?, event_date = ?, capacity = ?, is_published = ?, custom_fields = ?, updated_at = CURRENT_TIMESTAMP
+SET code = ?, title = ?, description = ?, venue = ?, event_date = ?, capacity = ?, color_bg = ?, color_text = ?, is_published = ?, custom_fields = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING *;
+
+-- name: GetEventByCode :one
+SELECT * FROM events WHERE code = ? LIMIT 1;
 
 -- name: DeleteEvent :exec
 DELETE FROM events WHERE id = ?;

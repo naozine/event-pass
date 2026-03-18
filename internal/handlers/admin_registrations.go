@@ -38,7 +38,7 @@ func (h *RegistrationAdminHandler) ListRegistrations(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load registrations")
 	}
 
-	return renderPage(c, "Registrations: "+event.Title, components.AdminRegistrationList(event, registrations))
+	return renderPage(c, event.Title+" の登録一覧", components.AdminRegistrationList(event, registrations))
 }
 
 func (h *RegistrationAdminHandler) UpdateStatus(c echo.Context) error {
@@ -123,5 +123,5 @@ func (h *RegistrationAdminHandler) Dashboard(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load dashboard")
 	}
 
-	return renderPage(c, "Dashboard", components.AdminDashboard(events))
+	return renderPage(c, "ダッシュボード", components.AdminDashboard(events))
 }

@@ -1,0 +1,9 @@
+-- +goose Up
+ALTER TABLE events ADD COLUMN code TEXT NOT NULL DEFAULT '';
+ALTER TABLE events ADD COLUMN color_bg TEXT NOT NULL DEFAULT '#000000';
+ALTER TABLE events ADD COLUMN color_text TEXT NOT NULL DEFAULT '#ffffff';
+
+-- +goose Down
+ALTER TABLE events DROP COLUMN code;
+ALTER TABLE events DROP COLUMN color_bg;
+ALTER TABLE events DROP COLUMN color_text;

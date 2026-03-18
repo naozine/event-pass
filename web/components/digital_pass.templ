@@ -10,21 +10,21 @@ templ DigitalPass(event database.Event, registration database.Registration) {
 	<div class="max-w-md mx-auto">
 		<div class="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
 			<!-- Header -->
-			<div class="bg-black px-6 py-4">
-				<p class="text-xs font-medium text-gray-400 uppercase tracking-wider">Event Pass</p>
-				<h2 class="mt-1 text-xl font-bold text-white">{ event.Title }</h2>
+			<div class="px-6 py-4" style={ fmt.Sprintf("background-color:%s;color:%s", event.ColorBg, event.ColorText) }>
+				<p class="text-xs font-medium uppercase tracking-wider" style="opacity:0.7">イベントパス</p>
+				<h2 class="mt-1 text-xl font-bold">{ event.Title }</h2>
 			</div>
 
 			<!-- Body -->
 			<div class="px-6 py-6 space-y-4">
 				<div class="grid grid-cols-2 gap-4">
 					<div>
-						<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Date</p>
-						<p class="mt-1 text-sm font-medium text-gray-900">{ event.EventDate.Format("Jan 2, 2006") }</p>
-						<p class="text-sm text-gray-500">{ event.EventDate.Format("3:04 PM") }</p>
+						<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">日時</p>
+						<p class="mt-1 text-sm font-medium text-gray-900">{ event.EventDate.Format("2006年1月2日") }</p>
+						<p class="text-sm text-gray-500">{ event.EventDate.Format("15:04") }</p>
 					</div>
 					<div>
-						<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Venue</p>
+						<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">会場</p>
 						<p class="mt-1 text-sm font-medium text-gray-900">{ event.Venue }</p>
 					</div>
 				</div>
@@ -62,35 +62,35 @@ templ DigitalPass(event database.Event, registration database.Registration) {
 					</div>
 				}
 				<div class="border-t border-dashed border-gray-200 pt-4">
-					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Attendee</p>
+					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">参加者</p>
 					<p class="mt-1 text-lg font-semibold text-gray-900">{ registration.Name }</p>
 				</div>
 
 				<div class="border-t border-dashed border-gray-200 pt-4">
-					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Status</p>
+					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</p>
 					<div class="mt-1">
 						if registration.Status == "registered" {
-							<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Confirmed</span>
+							<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">確定</span>
 						} else {
-							<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Cancelled</span>
+							<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">キャンセル済み</span>
 						}
 					</div>
 				</div>
 
 				<div class="border-t border-gray-200 pt-4 text-center">
-					<p class="text-xs text-gray-400">Registration #{ fmt.Sprintf("%d", registration.ID) }</p>
+					<p class="text-xs text-gray-400">登録番号 #{ fmt.Sprintf("%d", registration.ID) }</p>
 				</div>
 			</div>
 		</div>
 
 		<div class="mt-6 flex items-center justify-center gap-x-4">
 			if registration.Status == "registered" {
-				<form action={ templ.URL(fmt.Sprintf("/my/registrations/%d/cancel", registration.ID)) } method="POST" onsubmit="return confirm('Are you sure you want to cancel this registration?');">
-					@DangerButton("Cancel Registration")
+				<form action={ templ.URL(fmt.Sprintf("/my/registrations/%d/cancel", registration.ID)) } method="POST" onsubmit="return confirm('この登録をキャンセルしてもよろしいですか？');">
+					@DangerButton("登録をキャンセル")
 				</form>
 			}
 		</div>
 
-		@BackLink("Back to My Registrations", "/my")
+		@BackLink("参加登録一覧に戻る", "/my")
 	</div>
 }

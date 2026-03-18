@@ -7,12 +7,12 @@ import (
 
 templ MyRegistrations(registrations []database.ListRegistrationsByUserRow) {
 	<div class="max-w-5xl mx-auto space-y-6">
-		@PageHeader("My Registrations", "View your event registrations and passes.")
+		@PageHeader("参加登録一覧", "登録済みのイベントとパスを確認できます。")
 
 		if len(registrations) == 0 {
-			@EmptyState("You haven't registered for any events yet.")
+			@EmptyState("まだイベントに登録していません。")
 			<div class="text-center mt-4">
-				@PrimaryLink("Browse Events", "/events")
+				@PrimaryLink("イベントを探す", "/events")
 			</div>
 		} else {
 			<div class="space-y-4">
@@ -21,18 +21,18 @@ templ MyRegistrations(registrations []database.ListRegistrationsByUserRow) {
 						<div class="flex items-center justify-between">
 							<div>
 								<h3 class="text-base font-semibold text-gray-900">{ r.EventTitle }</h3>
-								<p class="mt-1 text-sm text-gray-500">{ r.EventDate.Format("Jan 2, 2006 3:04 PM") } &middot; { r.Venue }</p>
+								<p class="mt-1 text-sm text-gray-500">{ r.EventDate.Format("2006年1月2日 15:04") } &middot; { r.Venue }</p>
 							</div>
 							<div class="flex items-center gap-x-3">
 								if r.Status == "registered" {
-									<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Registered</span>
+									<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">登録済み</span>
 								} else {
-									<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Cancelled</span>
+									<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">キャンセル済み</span>
 								}
 							</div>
 						</div>
 						<div class="mt-4 flex items-center gap-x-3">
-							@SecondaryLink("View Pass", templ.URL(fmt.Sprintf("/my/registrations/%d/pass", r.ID)))
+							@SecondaryLink("パスを表示", templ.URL(fmt.Sprintf("/my/registrations/%d/pass", r.ID)))
 						</div>
 					</div>
 				}

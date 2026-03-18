@@ -7,12 +7,12 @@ import (
 
 templ AdminEventList(events []database.Event) {
 	<div class="max-w-5xl mx-auto space-y-6">
-		@ListPageHeader("Events", "Manage your events.") {
-			@PrimaryLink("New Event", "/admin/events/new")
+		@ListPageHeader("イベント管理", "イベントの管理ができます。") {
+			@PrimaryLink("新規イベント", "/admin/events/new")
 		}
 
 		if len(events) == 0 {
-			@EmptyState("No events yet. Create your first event to get started.")
+			@EmptyState("イベントがまだありません。最初のイベントを作成しましょう。")
 		} else {
 			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 				for _, e := range events {
@@ -21,15 +21,15 @@ templ AdminEventList(events []database.Event) {
 							<div>
 								<h3 class="text-base font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{ e.Title }</h3>
 								<p class="mt-1 text-sm text-gray-500">{ e.Venue }</p>
-								<p class="mt-1 text-xs text-gray-400">{ e.EventDate.Format("Jan 2, 2006 3:04 PM") }</p>
+								<p class="mt-1 text-xs text-gray-400">{ e.EventDate.Format("2006年1月2日 15:04") }</p>
 							</div>
 							<div class="flex items-center justify-between pt-4 border-t border-gray-50">
 								if e.IsPublished {
-									<span class="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full ring-1 ring-inset ring-green-600/20">Published</span>
+									<span class="text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full ring-1 ring-inset ring-green-600/20">公開中</span>
 								} else {
-									<span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">Draft</span>
+									<span class="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded-full">下書き</span>
 								}
-								<span class="text-xs text-gray-400">Capacity: { fmt.Sprintf("%d", e.Capacity) }</span>
+								<span class="text-xs text-gray-400">定員: { fmt.Sprintf("%d", e.Capacity) }名</span>
 							</div>
 						</div>
 					</a>
