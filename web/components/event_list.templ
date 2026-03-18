@@ -10,6 +10,10 @@ templ EventList(groups []models.EventGroup) {
 	<div class="max-w-5xl mx-auto space-y-6">
 		@PageHeader("開催予定のイベント", "イベントを閲覧して参加登録できます。")
 
+		<div class="text-sm mb-4">
+			@SecondaryLink("時間割表示に切替", "/events/timetable")
+		</div>
+
 		if len(groups) == 0 {
 			@EmptyState("現在、開催予定のイベントはありません。")
 		} else {

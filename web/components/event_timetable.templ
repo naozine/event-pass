@@ -1,0 +1,123 @@
+package components
+
+import (
+	"fmt"
+	"strings"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/models"
+)
+
+templ EventTimetable(timetables []models.Timetable) {
+	<div class="max-w-7xl mx-auto space-y-8">
+		@PageHeader("時間割", "時間帯と会場で一覧できます。")
+
+		<div class="text-sm mb-4">
+			@SecondaryLink("カード表示に切替", "/events")
+		</div>
+
+		if len(timetables) == 0 {
+			@EmptyState("現在、開催予定のイベントはありません。")
+		} else {
+			for _, tt := range timetables {
+				<div class="space-y-3">
+					<h3 class="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">{ tt.Section }</h3>
+					<div class="overflow-x-auto -mx-4 px-4">
+						@timetableGrid(tt)
+					</div>
+				</div>
+			}
+		}
+	</div>
+}
+
+templ timetableGrid(tt models.Timetable) {
+	{{
+		colCount := len(tt.Rooms) + 1
+		totalHeight := int(float64(tt.TotalRows) * tt.PxPerMinute)
+		gridStyle := fmt.Sprintf(
+			"display:grid;grid-template-columns:60px repeat(%d,minmax(80px,1fr));grid-template-rows:auto repeat(%d,%.2fpx);width:max-content;min-width:100%%",
+			len(tt.Rooms), tt.TotalRows, tt.PxPerMinute,
+		)
+		_ = colCount
+		_ = totalHeight
+	}}
+	<div style={ gridStyle }>
+		<!-- Header row -->
+		<div class="sticky left-0 z-20 bg-gray-100 border border-gray-200 px-2 py-2 text-xs font-semibold text-gray-600"
+			style="grid-column:1;grid-row:1">
+			時間
+		</div>
+		for colIdx, room := range tt.Rooms {
+			<div class="bg-gray-100 border border-gray-200 px-1.5 py-2 text-center text-xs font-semibold text-gray-600 leading-snug"
+				style={ fmt.Sprintf("grid-column:%d;grid-row:1", colIdx+2) }>
+				@roomHeader(room)
+			</div>
+		}
+
+		<!-- Time labels on left -->
+		for _, timeSlot := range tt.TimeSlots {
+			{{
+				slotMin := parseMinutesTempl(timeSlot)
+				rowStart := slotMin - tt.StartMinute + 2
+			}}
+			<div class="sticky left-0 z-10 bg-gray-50 border-l border-gray-200 px-2 flex items-start pt-0.5 text-xs font-medium text-gray-700"
+				style={ fmt.Sprintf("grid-column:1;grid-row:%d", rowStart) }>
+				{ timeSlot }
+			</div>
+		}
+
+		<!-- Horizontal guide lines for each time slot -->
+		for _, timeSlot := range tt.TimeSlots {
+			{{
+				slotMin := parseMinutesTempl(timeSlot)
+				rowStart := slotMin - tt.StartMinute + 2
+			}}
+			<div class="border-t border-gray-200"
+				style={ fmt.Sprintf("grid-column:2/%d;grid-row:%d", len(tt.Rooms)+2, rowStart) }>
+			</div>
+		}
+
+		<!-- Event cells -->
+		for _, timeSlot := range tt.TimeSlots {
+			for colIdx, room := range tt.Rooms {
+				if cell := tt.Grid[timeSlot][room]; cell != nil {
+					<a href={ templ.URL(fmt.Sprintf("/events/%d", cell.Event.ID)) }
+						class="flex flex-col items-center justify-center rounded-sm px-1.5 mx-0.5 overflow-hidden hover:opacity-80 transition-opacity border border-white/20 text-center"
+						style={ fmt.Sprintf("grid-column:%d;grid-row:%d/%d;background-color:%s;color:%s",
+							colIdx+2, cell.GridRowStart, cell.GridRowEnd, cell.Event.ColorBg, cell.Event.ColorText) }>
+						<div class="font-semibold text-sm leading-tight truncate max-w-full">{ cell.Event.Title }</div>
+						if cell.Subject != "" {
+							<div class="text-xs leading-tight truncate max-w-full" style="opacity:0.7">{ cell.Subject }</div>
+						}
+					</a>
+				}
+			}
+		}
+	</div>
+}
+
+func parseMinutesTempl(hhmm string) int {
+	parts := strings.Split(strings.TrimSpace(hhmm), ":")
+	if len(parts) != 2 {
+		return 0
+	}
+	h := 0
+	m := 0
+	for _, c := range parts[0] {
+		h = h*10 + int(c-'0')
+	}
+	for _, c := range parts[1] {
+		m = m*10 + int(c-'0')
+	}
+	return h*60 + m
+}
+
+// roomHeader splits venue like "1号館4F 体験教室①" into two lines.
+templ roomHeader(room string) {
+	{{ parts := strings.SplitN(room, " ", 2) }}
+	if len(parts) == 2 {
+		<div class="text-gray-400 font-normal">{ parts[0] }</div>
+		<div>{ parts[1] }</div>
+	} else {
+		<div>{ room }</div>
+	}
+}

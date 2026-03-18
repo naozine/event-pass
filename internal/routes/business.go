@@ -15,6 +15,7 @@ func RegisterBusinessRoutes(e *echo.Echo, queries *database.Queries, authMW echo
 	// --- Public: Events (no auth) ---
 	publicHandler := handlers.NewPublicEventHandler(queries)
 	e.GET("/events", publicHandler.ListUpcomingEvents)
+	e.GET("/events/timetable", publicHandler.TimetableView)
 	e.GET("/events/:id", publicHandler.ShowEventDetail)
 	e.GET("/events/:id/register", publicHandler.ShowRegistrationForm)
 	e.POST("/events/:id/register", publicHandler.SubmitRegistration)
