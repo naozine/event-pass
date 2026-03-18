@@ -3,33 +3,45 @@ package components
 import (
 	"fmt"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/models"
 )
 
-templ EventList(events []database.Event) {
+templ EventList(groups []models.EventGroup) {
 	<div class="max-w-5xl mx-auto space-y-6">
 		@PageHeader("開催予定のイベント", "イベントを閲覧して参加登録できます。")
 
-		if len(events) == 0 {
+		if len(groups) == 0 {
 			@EmptyState("現在、開催予定のイベントはありません。")
 		} else {
-			<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-				for _, e := range events {
-					<a href={ templ.URL(fmt.Sprintf("/events/%d", e.ID)) } class="group block rounded-lg border border-gray-200 bg-white p-6 hover:border-gray-300 hover:shadow-md transition-all duration-200">
-						<div class="flex flex-col h-full justify-between space-y-4">
-							<div>
-								<h3 class="text-lg font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">{ e.Title }</h3>
-								<p class="mt-2 text-sm text-gray-500">{ e.Venue }</p>
-							</div>
-							<div class="pt-4 border-t border-gray-100">
-								<p class="text-sm font-medium text-gray-700">{ e.EventDate.Format("2006年1月2日 15:04") }</p>
-								if e.Capacity > 0 {
-									<p class="mt-1 text-xs text-gray-400">定員: { fmt.Sprintf("%d", e.Capacity) }名</p>
-								}
-							</div>
-						</div>
-					</a>
-				}
-			</div>
+			for _, g := range groups {
+				<div class="space-y-3">
+					<h3 class="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">{ g.Section }</h3>
+					<div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+						for _, e := range g.Events {
+							@eventCard(e)
+						}
+					</div>
+				</div>
+			}
 		}
 	</div>
+}
+
+templ eventCard(e database.Event) {
+	<a href={ templ.URL(fmt.Sprintf("/events/%d", e.ID)) } class="group flex items-stretch rounded-md border border-gray-200 bg-white overflow-hidden hover:border-gray-300 hover:shadow-sm transition-all duration-150">
+		<div class="w-1.5 shrink-0" style={ fmt.Sprintf("background-color:%s", e.ColorBg) }></div>
+		<div class="flex-1 px-3 py-2.5 min-w-0">
+			<div class="flex items-baseline justify-between gap-2">
+				<h4 class="text-sm font-semibold text-gray-900 group-hover:text-indigo-600 truncate">{ e.Title }</h4>
+				<span class="text-xs text-gray-400 whitespace-nowrap">{ e.EventDate.Format("15:04") }</span>
+			</div>
+			<div class="flex items-center gap-2 mt-0.5 text-xs text-gray-500">
+				if e.Description != "" {
+					<span class="truncate">{ e.Description }</span>
+					<span class="text-gray-300">|</span>
+				}
+				<span class="whitespace-nowrap">{ e.Venue }</span>
+			</div>
+		</div>
+	</a>
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/appcontext"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/logger"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/models"
 	"github.com/naozine/project_crud_with_auth_tmpl/web/components"
 )
 
@@ -28,7 +29,31 @@ func (h *PublicEventHandler) ListUpcomingEvents(c echo.Context) error {
 		logger.Error("failed to list published events", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load events")
 	}
-	return renderPage(c, "イベント一覧", components.EventList(events))
+
+	groups := groupEventsBySection(events)
+	return renderPage(c, "イベント一覧", components.EventList(groups))
+}
+
+func groupEventsBySection(events []database.Event) []models.EventGroup {
+	orderMap := map[string]int{}
+	groupMap := map[string][]database.Event{}
+
+	for _, e := range events {
+		section := models.GetCustomFieldValue(e.CustomFields, "区分")
+		if section == "" {
+			section = "その他"
+		}
+		if _, exists := orderMap[section]; !exists {
+			orderMap[section] = len(orderMap)
+		}
+		groupMap[section] = append(groupMap[section], e)
+	}
+
+	groups := make([]models.EventGroup, len(orderMap))
+	for section, idx := range orderMap {
+		groups[idx] = models.EventGroup{Section: section, Events: groupMap[section]}
+	}
+	return groups
 }
 
 func (h *PublicEventHandler) ShowEventDetail(c echo.Context) error {
