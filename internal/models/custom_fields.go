@@ -30,6 +30,13 @@ type EventGroup struct {
 	Events  []database.Event
 }
 
+// EventGroupSummary holds summary info for an event group on the landing page.
+type EventGroupSummary struct {
+	Name       string
+	EventDate  string // formatted date string for display
+	EventCount int64
+}
+
 // Timetable represents a grid of events organized by time slots and rooms.
 type Timetable struct {
 	Section   string

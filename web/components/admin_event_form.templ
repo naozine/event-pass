@@ -36,7 +36,7 @@ templ AdminEventForm(event *database.Event) {
 
 templ eventFormFields(event *database.Event) {
 	{{
-		var code, title, description, venue, eventDate string
+		var code, title, description, venue, eventDate, groupName string
 		var capacity string
 		var colorBg, colorText string
 		var isPublished bool
@@ -51,9 +51,13 @@ templ eventFormFields(event *database.Event) {
 			capacity = fmt.Sprintf("%d", event.Capacity)
 			colorBg = event.ColorBg
 			colorText = event.ColorText
+			groupName = event.GroupName
 			isPublished = event.IsPublished
 		}
 	}}
+	@FormField("グループ名", "同じグループ名のイベントがまとめて表示されます。") {
+		@TextInput("group_name", groupName, "例: 東京私立男子中学校フェスタ 2026")
+	}
 	@FormField("コード", "イベントを識別するユニークなコード（例: T1TH1）") {
 		@TextInput("code", code, "例: T1TH1")
 	}

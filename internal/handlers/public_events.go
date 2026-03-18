@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/appcontext"
@@ -26,14 +27,70 @@ func NewPublicEventHandler(queries *database.Queries) *PublicEventHandler {
 
 func (h *PublicEventHandler) ListUpcomingEvents(c echo.Context) error {
 	ctx := c.Request().Context()
-	events, err := h.Queries.ListPublishedEvents(ctx)
+
+	// If ?group= is specified, show events in that group
+	groupName := c.QueryParam("group")
+	if groupName != "" {
+		events, err := h.Queries.ListPublishedEventsByGroup(ctx, groupName)
+		if err != nil {
+			logger.Error("failed to list events by group", "error", err)
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load events")
+		}
+		groups := groupEventsBySection(events)
+		return renderPage(c, groupName, components.EventList(groups, groupName))
+	}
+
+	// Otherwise show event group landing page
+	eventGroups, err := h.Queries.ListPublishedEventGroups(ctx)
+	if err != nil {
+		logger.Error("failed to list event groups", "error", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load events")
+	}
+
+	// Separate into multi-event groups and single events
+	var groupItems []models.EventGroupSummary
+	for _, g := range eventGroups {
+		if g.GroupName != "" && g.EventCount > 1 {
+			dateStr := ""
+			if t, ok := g.MinEventDate.(time.Time); ok {
+				dateStr = t.Format("2006年1月2日")
+			} else if s, ok := g.MinEventDate.(string); ok {
+				if t, err := time.Parse("2006-01-02 15:04:05", s); err == nil {
+					dateStr = t.Format("2006年1月2日")
+				} else {
+					dateStr = s
+				}
+			}
+			groupItems = append(groupItems, models.EventGroupSummary{
+				Name:       g.GroupName,
+				EventDate:  dateStr,
+				EventCount: g.EventCount,
+			})
+		}
+	}
+
+	// Fetch single/ungrouped events
+	allEvents, err := h.Queries.ListPublishedEvents(ctx)
 	if err != nil {
 		logger.Error("failed to list published events", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load events")
 	}
+	var singleEvents []database.Event
+	for _, e := range allEvents {
+		if e.GroupName == "" {
+			singleEvents = append(singleEvents, e)
+		} else {
+			// Check if this group has only 1 event
+			for _, g := range eventGroups {
+				if g.GroupName == e.GroupName && g.EventCount == 1 {
+					singleEvents = append(singleEvents, e)
+					break
+				}
+			}
+		}
+	}
 
-	groups := groupEventsBySection(events)
-	return renderPage(c, "イベント一覧", components.EventList(groups))
+	return renderPage(c, "イベント", components.EventGroupList(groupItems, singleEvents))
 }
 
 func groupEventsBySection(events []database.Event) []models.EventGroup {
@@ -60,14 +117,26 @@ func groupEventsBySection(events []database.Event) []models.EventGroup {
 
 func (h *PublicEventHandler) TimetableView(c echo.Context) error {
 	ctx := c.Request().Context()
-	events, err := h.Queries.ListPublishedEvents(ctx)
+	groupName := c.QueryParam("group")
+
+	var events []database.Event
+	var err error
+	if groupName != "" {
+		events, err = h.Queries.ListPublishedEventsByGroup(ctx, groupName)
+	} else {
+		events, err = h.Queries.ListPublishedEvents(ctx)
+	}
 	if err != nil {
 		logger.Error("failed to list published events", "error", err)
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to load events")
 	}
 
+	title := "時間割"
+	if groupName != "" {
+		title = groupName + " - 時間割"
+	}
 	timetables := buildTimetables(events)
-	return renderPage(c, "時間割", components.EventTimetable(timetables))
+	return renderPage(c, title, components.EventTimetable(timetables, groupName))
 }
 
 func buildTimetables(events []database.Event) []models.Timetable {

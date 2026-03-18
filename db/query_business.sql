@@ -35,15 +35,27 @@ SELECT * FROM events ORDER BY event_date DESC;
 SELECT * FROM events WHERE id = ? LIMIT 1;
 
 -- name: CreateEvent :one
-INSERT INTO events (code, title, description, venue, event_date, capacity, color_bg, color_text, is_published, custom_fields)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO events (code, title, description, venue, event_date, capacity, color_bg, color_text, group_name, is_published, custom_fields)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: UpdateEvent :one
 UPDATE events
-SET code = ?, title = ?, description = ?, venue = ?, event_date = ?, capacity = ?, color_bg = ?, color_text = ?, is_published = ?, custom_fields = ?, updated_at = CURRENT_TIMESTAMP
+SET code = ?, title = ?, description = ?, venue = ?, event_date = ?, capacity = ?, color_bg = ?, color_text = ?, group_name = ?, is_published = ?, custom_fields = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING *;
+
+-- name: ListPublishedEventsByGroup :many
+SELECT * FROM events
+WHERE is_published = 1 AND event_date >= datetime('now') AND group_name = ?
+ORDER BY event_date ASC;
+
+-- name: ListPublishedEventGroups :many
+SELECT group_name, MIN(event_date) as min_event_date, COUNT(*) as event_count
+FROM events
+WHERE is_published = 1 AND event_date >= datetime('now')
+GROUP BY group_name
+ORDER BY min_event_date ASC;
 
 -- name: GetEventByCode :one
 SELECT * FROM events WHERE code = ? LIMIT 1;

@@ -2,16 +2,26 @@ package components
 
 import (
 	"fmt"
+	"net/url"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/models"
 )
 
-templ EventList(groups []models.EventGroup) {
+templ EventList(groups []models.EventGroup, groupName string) {
 	<div class="max-w-5xl mx-auto space-y-6">
-		@PageHeader("開催予定のイベント", "イベントを閲覧して参加登録できます。")
+		if groupName != "" {
+			@PageHeader(groupName, "イベントを閲覧して参加登録できます。")
+		} else {
+			@PageHeader("開催予定のイベント", "イベントを閲覧して参加登録できます。")
+		}
 
-		<div class="text-sm mb-4">
-			@SecondaryLink("時間割表示に切替", "/events/timetable")
+		<div class="flex items-center gap-3 text-sm mb-4">
+			if groupName != "" {
+				@SecondaryLink("時間割表示に切替", templ.URL("/events/timetable?group="+url.QueryEscape(groupName)))
+				@BackLink("イベント一覧に戻る", "/events")
+			} else {
+				@SecondaryLink("時間割表示に切替", "/events/timetable")
+			}
 		</div>
 
 		if len(groups) == 0 {

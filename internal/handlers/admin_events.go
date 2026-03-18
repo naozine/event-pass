@@ -53,6 +53,7 @@ func (h *EventHandler) CreateEvent(c echo.Context) error {
 		Capacity:     params.Capacity,
 		ColorBg:      params.ColorBg,
 		ColorText:    params.ColorText,
+		GroupName:    params.GroupName,
 		IsPublished:  params.IsPublished,
 		CustomFields: params.CustomFields,
 	})
@@ -122,6 +123,7 @@ func (h *EventHandler) UpdateEvent(c echo.Context) error {
 		Capacity:     params.Capacity,
 		ColorBg:      params.ColorBg,
 		ColorText:    params.ColorText,
+		GroupName:    params.GroupName,
 		IsPublished:  params.IsPublished,
 		CustomFields: params.CustomFields,
 	})
@@ -171,6 +173,7 @@ func (h *EventHandler) TogglePublish(c echo.Context) error {
 		Capacity:     event.Capacity,
 		ColorBg:      event.ColorBg,
 		ColorText:    event.ColorText,
+		GroupName:    event.GroupName,
 		IsPublished:  !event.IsPublished,
 		CustomFields: event.CustomFields,
 	})
@@ -191,6 +194,7 @@ type eventFormParams struct {
 	Capacity     int64
 	ColorBg      string
 	ColorText    string
+	GroupName    string
 	IsPublished  bool
 	CustomFields string
 }
@@ -250,6 +254,7 @@ func parseEventForm(c echo.Context) (eventFormParams, error) {
 		Capacity:     capacity,
 		ColorBg:      colorBg,
 		ColorText:    colorText,
+		GroupName:    c.FormValue("group_name"),
 		IsPublished:  isPublished,
 		CustomFields: customFieldsJSON,
 	}, nil

@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS events (
   capacity INTEGER NOT NULL DEFAULT 0,
   color_bg TEXT NOT NULL DEFAULT '#000000',
   color_text TEXT NOT NULL DEFAULT '#ffffff',
+  group_name TEXT NOT NULL DEFAULT '',
   is_published BOOLEAN NOT NULL DEFAULT 0,
   custom_fields TEXT NOT NULL DEFAULT '[]',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

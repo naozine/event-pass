@@ -3,15 +3,25 @@ package components
 import (
 	"fmt"
 	"strings"
+	"net/url"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/models"
 )
 
-templ EventTimetable(timetables []models.Timetable) {
+templ EventTimetable(timetables []models.Timetable, groupName string) {
 	<div class="max-w-7xl mx-auto space-y-8">
-		@PageHeader("時間割", "時間帯と会場で一覧できます。")
+		if groupName != "" {
+			@PageHeader(groupName+" - 時間割", "時間帯と会場で一覧できます。")
+		} else {
+			@PageHeader("時間割", "時間帯と会場で一覧できます。")
+		}
 
-		<div class="text-sm mb-4">
-			@SecondaryLink("カード表示に切替", "/events")
+		<div class="flex items-center gap-3 text-sm mb-4">
+			if groupName != "" {
+				@SecondaryLink("カード表示に切替", templ.URL("/events?group="+url.QueryEscape(groupName)))
+				@BackLink("イベント一覧に戻る", "/events")
+			} else {
+				@SecondaryLink("カード表示に切替", "/events")
+			}
 		</div>
 
 		if len(timetables) == 0 {
