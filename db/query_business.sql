@@ -35,13 +35,13 @@ SELECT * FROM events ORDER BY event_date DESC;
 SELECT * FROM events WHERE id = ? LIMIT 1;
 
 -- name: CreateEvent :one
-INSERT INTO events (title, description, venue, event_date, capacity, is_published)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO events (title, description, venue, event_date, capacity, is_published, custom_fields)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: UpdateEvent :one
 UPDATE events
-SET title = ?, description = ?, venue = ?, event_date = ?, capacity = ?, is_published = ?, updated_at = CURRENT_TIMESTAMP
+SET title = ?, description = ?, venue = ?, event_date = ?, capacity = ?, is_published = ?, custom_fields = ?, updated_at = CURRENT_TIMESTAMP
 WHERE id = ?
 RETURNING *;
 
@@ -55,8 +55,8 @@ WHERE event_id = ? AND status = 'registered';
 -- Registrations
 
 -- name: CreateRegistration :one
-INSERT INTO registrations (event_id, user_id, name, status)
-VALUES (?, ?, ?, 'registered')
+INSERT INTO registrations (event_id, user_id, name, status, custom_fields)
+VALUES (?, ?, ?, 'registered', ?)
 RETURNING *;
 
 -- name: GetRegistrationByID :one

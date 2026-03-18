@@ -147,9 +147,10 @@ func (h *PublicEventHandler) SubmitRegistration(c echo.Context) error {
 
 	// Create registration
 	_, err = h.Queries.CreateRegistration(ctx, database.CreateRegistrationParams{
-		EventID: id,
-		UserID:  user.ID,
-		Name:    name,
+		EventID:      id,
+		UserID:       user.ID,
+		Name:         name,
+		CustomFields: "[]",
 	})
 	if err != nil {
 		logger.Error("failed to create registration", "error", err)

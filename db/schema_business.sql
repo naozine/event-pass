@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS events (
   event_date DATETIME NOT NULL,
   capacity INTEGER NOT NULL DEFAULT 0,
   is_published BOOLEAN NOT NULL DEFAULT 0,
+  custom_fields TEXT NOT NULL DEFAULT '[]',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -24,5 +25,6 @@ CREATE TABLE IF NOT EXISTS registrations (
   user_id INTEGER NOT NULL REFERENCES users(id),
   name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'registered',
+  custom_fields TEXT NOT NULL DEFAULT '[]',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

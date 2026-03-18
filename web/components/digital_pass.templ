@@ -3,6 +3,7 @@ package components
 import (
 	"fmt"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/models"
 )
 
 templ DigitalPass(event database.Event, registration database.Registration) {
@@ -28,6 +29,38 @@ templ DigitalPass(event database.Event, registration database.Registration) {
 					</div>
 				</div>
 
+				<!-- Event custom fields -->
+				{{
+					eventFields := models.ParseCustomFields(event.CustomFields)
+				}}
+				if len(eventFields) > 0 {
+					<div class="border-t border-dashed border-gray-200 pt-4">
+						<div class="grid grid-cols-2 gap-4">
+							for _, f := range eventFields {
+								<div>
+									<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{ f.Key }</p>
+									<p class="mt-1 text-sm font-medium text-gray-900">{ f.Value }</p>
+								</div>
+							}
+						</div>
+					</div>
+				}
+				<!-- Registration custom fields -->
+				{{
+					regFields := models.ParseCustomFields(registration.CustomFields)
+				}}
+				if len(regFields) > 0 {
+					<div class="border-t border-dashed border-gray-200 pt-4">
+						<div class="grid grid-cols-2 gap-4">
+							for _, f := range regFields {
+								<div>
+									<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{ f.Key }</p>
+									<p class="mt-1 text-sm font-medium text-gray-900">{ f.Value }</p>
+								</div>
+							}
+						</div>
+					</div>
+				}
 				<div class="border-t border-dashed border-gray-200 pt-4">
 					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Attendee</p>
 					<p class="mt-1 text-lg font-semibold text-gray-900">{ registration.Name }</p>
