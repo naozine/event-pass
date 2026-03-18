@@ -1,0 +1,56 @@
+package components
+
+import (
+	"fmt"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+)
+
+templ EventDetail(event database.Event, registrationCount int64) {
+	<div class="max-w-3xl mx-auto">
+		<div class="mb-8">
+			<h2 class="text-2xl font-bold tracking-tight text-gray-900">{ event.Title }</h2>
+			<p class="mt-2 text-sm text-gray-500">
+				{ event.EventDate.Format("Jan 2, 2006 3:04 PM") } &middot; { event.Venue }
+			</p>
+		</div>
+
+		@Card() {
+			if event.Description != "" {
+				<div class="mb-6">
+					<h3 class="text-sm font-medium text-gray-500">About this event</h3>
+					<p class="mt-2 text-sm text-gray-900 whitespace-pre-wrap">{ event.Description }</p>
+				</div>
+			}
+
+			<dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Date & Time</dt>
+					<dd class="mt-1 text-sm text-gray-900">{ event.EventDate.Format("January 2, 2006 at 3:04 PM") }</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Venue</dt>
+					<dd class="mt-1 text-sm text-gray-900">{ event.Venue }</dd>
+				</div>
+				if event.Capacity > 0 {
+					<div>
+						<dt class="text-sm font-medium text-gray-500">Availability</dt>
+						<dd class="mt-1 text-sm text-gray-900">
+							if registrationCount >= event.Capacity {
+								<span class="text-red-600 font-medium">Full</span>
+							} else {
+								{ fmt.Sprintf("%d / %d spots taken", registrationCount, event.Capacity) }
+							}
+						</dd>
+					</div>
+				}
+			</dl>
+		}
+
+		<div class="mt-8 flex items-center gap-x-4">
+			if event.Capacity == 0 || registrationCount < event.Capacity {
+				@PrimaryLink("Register Now", templ.URL(fmt.Sprintf("/events/%d/register", event.ID)))
+			}
+			@BackLink("Back to Events", "/events")
+		</div>
+	</div>
+}

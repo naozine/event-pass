@@ -1,0 +1,80 @@
+package components
+
+import (
+	"fmt"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+)
+
+templ AdminEventForm(event *database.Event) {
+	<div class="max-w-xl mx-auto">
+		if event == nil {
+			@PageHeader("New Event", "Create a new event for attendees to register.")
+		} else {
+			@PageHeader("Edit Event", "Update the event details.")
+		}
+
+		if event == nil {
+			<form action="/admin/events/new" method="POST" class="space-y-6">
+				@eventFormFields(nil)
+				@FormFooter() {
+					@CancelLink("/admin/events")
+					@PrimaryButton("Create")
+				}
+			</form>
+		} else {
+			<form action={ templ.URL(fmt.Sprintf("/admin/events/%d/update", event.ID)) } method="POST" class="space-y-6">
+				@eventFormFields(event)
+				@FormFooter() {
+					@CancelLink(templ.URL(fmt.Sprintf("/admin/events/%d", event.ID)))
+					@PrimaryButton("Save")
+				}
+			</form>
+		}
+	</div>
+}
+
+templ eventFormFields(event *database.Event) {
+	{{
+		var title, description, venue, eventDate string
+		var capacity string
+		var isPublished bool
+		if event != nil {
+			title = event.Title
+			description = event.Description
+			venue = event.Venue
+			eventDate = event.EventDate.Format("2006-01-02T15:04")
+			capacity = fmt.Sprintf("%d", event.Capacity)
+			isPublished = event.IsPublished
+		}
+	}}
+	@FormField("Title", "") {
+		@TextInput("title", title, "e.g. Tech Conference 2026")
+	}
+	@FormField("Description", "") {
+		<textarea name="description" id="description" rows="4"
+			class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+			placeholder="Describe the event...">{ description }</textarea>
+	}
+	@FormField("Venue", "") {
+		@TextInput("venue", venue, "e.g. Convention Center, Room A")
+	}
+	@FormField("Date & Time", "") {
+		<input type="datetime-local" name="event_date" id="event_date" value={ eventDate } required
+			class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"/>
+	}
+	@FormField("Capacity", "Set to 0 for unlimited.") {
+		<input type="number" name="capacity" id="capacity" value={ capacity } min="0"
+			class="block w-full rounded-md border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-black sm:text-sm sm:leading-6"
+			placeholder="0"/>
+	}
+	<div class="flex items-center gap-x-3">
+		if isPublished {
+			<input type="checkbox" name="is_published" id="is_published" checked
+				class="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"/>
+		} else {
+			<input type="checkbox" name="is_published" id="is_published"
+				class="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"/>
+		}
+		<label for="is_published" class="text-sm font-medium text-gray-900">Published</label>
+	</div>
+}

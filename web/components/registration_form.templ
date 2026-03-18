@@ -1,0 +1,30 @@
+package components
+
+import (
+	"fmt"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+)
+
+templ RegistrationForm(event database.Event, name string, email string, errMsg string) {
+	<div class="max-w-xl mx-auto">
+		@PageHeader("Register for "+event.Title, event.EventDate.Format("Jan 2, 2006 3:04 PM")+" · "+event.Venue)
+
+		if errMsg != "" {
+			@AlertError(errMsg)
+		}
+
+		<form action={ templ.URL(fmt.Sprintf("/events/%d/register", event.ID)) } method="POST" class="mt-6 space-y-6">
+			@FormField("Name", "") {
+				@TextInput("name", name, "Your full name")
+			}
+			@FormField("Email", "We'll use this to send your event pass.") {
+				@EmailInput("email", email, "you@example.com")
+			}
+
+			@FormFooter() {
+				@CancelLink(templ.URL(fmt.Sprintf("/events/%d", event.ID)))
+				@PrimaryButton("Register")
+			}
+		</form>
+	</div>
+}

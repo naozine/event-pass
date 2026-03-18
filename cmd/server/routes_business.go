@@ -9,8 +9,8 @@ import (
 
 // ConfigureBusinessSettings allows customization of MagicLink config and App Name
 func ConfigureBusinessSettings(config *magiclink.Config) {
-	config.RedirectURL = "/projects"         // Redirect to projects list after login
-	config.WebAuthnRedirectURL = "/projects" // Redirect to projects list after passkey login
+	config.RedirectURL = "/events"         // Redirect to event list after login
+	config.WebAuthnRedirectURL = "/events" // Redirect to event list after passkey login
 
 	// 負荷テスト用: DISABLE_RATE_LIMITING=true でレート制限を無効化
 	if os.Getenv("DISABLE_RATE_LIMITING") == "true" {
@@ -18,5 +18,5 @@ func ConfigureBusinessSettings(config *magiclink.Config) {
 	}
 
 	// Set Application Name
-	appconfig.AppName = "プロジェクト管理"
+	appconfig.AppName = "Event Pass"
 }

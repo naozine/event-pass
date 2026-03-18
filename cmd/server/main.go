@@ -94,7 +94,7 @@ func main() {
 		}
 	}
 
-	mlConfig.RedirectURL = "/projects"        // Redirect to projects list after login
+	mlConfig.RedirectURL = "/events"          // Redirect to event list after login
 	mlConfig.ErrorRedirectURL = "/auth/login" // Redirect to login page on error
 	mlConfig.LoginSuccessMessage = "ログイン用のメールを送信しました"
 
@@ -144,9 +144,9 @@ func main() {
 	mlConfig.WebAuthnRPID = extractHost(mlConfig.ServerAddr)
 	mlConfig.WebAuthnRPName = os.Getenv("WEBAUTHN_RP_NAME")
 	if mlConfig.WebAuthnRPName == "" {
-		mlConfig.WebAuthnRPName = "Project CRUD"
+		mlConfig.WebAuthnRPName = "Event Pass"
 	}
-	mlConfig.WebAuthnRedirectURL = "/projects" // Redirect to projects list after passkey login
+	mlConfig.WebAuthnRedirectURL = "/events" // Redirect to event list after passkey login
 	mlConfig.WebAuthnAllowedOrigins = []string{mlConfig.ServerAddr}
 
 	// Allow business logic to configure MagicLink settings
@@ -182,7 +182,7 @@ func main() {
 
 	// Public Routes
 	e.GET("/", func(c echo.Context) error {
-		return c.Redirect(http.StatusSeeOther, "/auth/login")
+		return c.Redirect(http.StatusSeeOther, "/events")
 	})
 	e.GET("/auth/login", authHandler.LoginPage)
 

@@ -1,11 +1,4 @@
--- NOTE: Do not use Japanese in sqlc source files (causes code generation bugs)
-
-CREATE TABLE IF NOT EXISTS projects (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
+-- +goose Up
 CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   title TEXT NOT NULL,
@@ -26,3 +19,10 @@ CREATE TABLE IF NOT EXISTS registrations (
   status TEXT NOT NULL DEFAULT 'registered',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_registrations_event_id ON registrations(event_id);
+CREATE INDEX IF NOT EXISTS idx_registrations_user_id ON registrations(user_id);
+
+-- +goose Down
+DROP TABLE IF EXISTS registrations;
+DROP TABLE IF EXISTS events;

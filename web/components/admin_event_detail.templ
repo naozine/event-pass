@@ -1,0 +1,69 @@
+package components
+
+import (
+	"fmt"
+	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
+)
+
+templ AdminEventDetail(event database.Event, registrationCount int64) {
+	<div class="max-w-3xl mx-auto">
+		<div class="mb-8 flex items-center justify-between">
+			<div>
+				<h2 class="text-2xl font-bold tracking-tight text-gray-900">{ event.Title }</h2>
+				<p class="mt-1 text-sm text-gray-500">
+					{ event.EventDate.Format("Jan 2, 2006 3:04 PM") } &middot; { event.Venue }
+				</p>
+			</div>
+			<div class="flex space-x-3">
+				<form action={ templ.URL(fmt.Sprintf("/admin/events/%d/toggle-publish", event.ID)) } method="POST">
+					if event.IsPublished {
+						@SecondaryButton("Unpublish", nil)
+					} else {
+						@SecondaryButton("Publish", nil)
+					}
+				</form>
+				@SecondaryLink("Edit", templ.URL(fmt.Sprintf("/admin/events/%d/edit", event.ID)))
+				<form action={ templ.URL(fmt.Sprintf("/admin/events/%d/delete", event.ID)) } method="POST" onsubmit="return confirm('Are you sure you want to delete this event?');">
+					@DangerSolidButton("Delete")
+				</form>
+			</div>
+		</div>
+
+		@Card() {
+			<dl class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Status</dt>
+					<dd class="mt-1">
+						if event.IsPublished {
+							<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Published</span>
+						} else {
+							<span class="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">Draft</span>
+						}
+					</dd>
+				</div>
+				<div>
+					<dt class="text-sm font-medium text-gray-500">Capacity</dt>
+					<dd class="mt-1 text-sm text-gray-900">
+						if event.Capacity > 0 {
+							{ fmt.Sprintf("%d / %d registered", registrationCount, event.Capacity) }
+						} else {
+							{ fmt.Sprintf("%d registered (unlimited)", registrationCount) }
+						}
+					</dd>
+				</div>
+				if event.Description != "" {
+					<div class="sm:col-span-2">
+						<dt class="text-sm font-medium text-gray-500">Description</dt>
+						<dd class="mt-1 text-sm text-gray-900 whitespace-pre-wrap">{ event.Description }</dd>
+					</div>
+				}
+			</dl>
+		}
+
+		<div class="mt-6 flex items-center gap-x-4">
+			@SecondaryLink("View Registrations", templ.URL(fmt.Sprintf("/admin/events/%d/registrations", event.ID)))
+		</div>
+
+		@BackLink("Back to Events", "/admin/events")
+	</div>
+}
