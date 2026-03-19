@@ -172,6 +172,12 @@ func buildTimetables(events []database.Event) []models.Timetable {
 	for _, e := range ttEvents {
 		tr := models.GetCustomFieldValue(e.CustomFields, "時間帯")
 		r := e.Venue
+		if r == "" {
+			r = e.GroupName
+		}
+		if r == "" {
+			r = e.Title
+		}
 		if r != "" && !roomSeen[r] {
 			roomSeen[r] = true
 			roomOrder = append(roomOrder, r)
