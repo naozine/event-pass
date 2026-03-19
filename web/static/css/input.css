@@ -20,3 +20,30 @@
 #nav-menu::backdrop {
     background: rgb(107 114 128 / 0.75);
 }
+
+/* Print styles for A4 ticket */
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 15mm;
+    }
+    body {
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    nav, .no-print {
+        display: none !important;
+    }
+    main {
+        padding: 0 !important;
+    }
+    .print-pass {
+        max-width: none !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+    .print-pass * {
+        box-shadow: none !important;
+    }
+}

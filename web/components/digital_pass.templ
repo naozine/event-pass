@@ -2,88 +2,20 @@ package components
 
 import (
 	"fmt"
+	"time"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/database"
 	"github.com/naozine/project_crud_with_auth_tmpl/internal/models"
 )
 
 templ DigitalPass(event database.Event, registration database.Registration) {
-	<div class="max-w-md mx-auto">
-		<div class="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
-			<!-- Header -->
-			<div class="px-6 py-4" style={ fmt.Sprintf("background-color:%s;color:%s", event.ColorBg, event.ColorText) }>
-				<p class="text-xs font-medium uppercase tracking-wider" style="opacity:0.7">イベントパス</p>
-				<h2 class="mt-1 text-xl font-bold">{ event.Title }</h2>
-			</div>
+	<div class="max-w-2xl mx-auto print-pass">
+		if event.GroupName != "" {
+			@festaPass(event, registration)
+		} else {
+			@defaultPass(event, registration)
+		}
 
-			<!-- Body -->
-			<div class="px-6 py-6 space-y-4">
-				<div class="grid grid-cols-2 gap-4">
-					<div>
-						<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">日時</p>
-						<p class="mt-1 text-sm font-medium text-gray-900">{ event.EventDate.Format("2006年1月2日") }</p>
-						<p class="text-sm text-gray-500">{ event.EventDate.Format("15:04") }</p>
-					</div>
-					<div>
-						<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">会場</p>
-						<p class="mt-1 text-sm font-medium text-gray-900">{ event.Venue }</p>
-					</div>
-				</div>
-
-				<!-- Event custom fields -->
-				{{
-					eventFields := models.ParseCustomFields(event.CustomFields)
-				}}
-				if len(eventFields) > 0 {
-					<div class="border-t border-dashed border-gray-200 pt-4">
-						<div class="grid grid-cols-2 gap-4">
-							for _, f := range eventFields {
-								<div>
-									<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{ f.Key }</p>
-									<p class="mt-1 text-sm font-medium text-gray-900">{ f.Value }</p>
-								</div>
-							}
-						</div>
-					</div>
-				}
-				<!-- Registration custom fields -->
-				{{
-					regFields := models.ParseCustomFields(registration.CustomFields)
-				}}
-				if len(regFields) > 0 {
-					<div class="border-t border-dashed border-gray-200 pt-4">
-						<div class="grid grid-cols-2 gap-4">
-							for _, f := range regFields {
-								<div>
-									<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{ f.Key }</p>
-									<p class="mt-1 text-sm font-medium text-gray-900">{ f.Value }</p>
-								</div>
-							}
-						</div>
-					</div>
-				}
-				<div class="border-t border-dashed border-gray-200 pt-4">
-					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">参加者</p>
-					<p class="mt-1 text-lg font-semibold text-gray-900">{ registration.Name }</p>
-				</div>
-
-				<div class="border-t border-dashed border-gray-200 pt-4">
-					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</p>
-					<div class="mt-1">
-						if registration.Status == "registered" {
-							<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">確定</span>
-						} else {
-							<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">キャンセル済み</span>
-						}
-					</div>
-				</div>
-
-				<div class="border-t border-gray-200 pt-4 text-center">
-					<p class="text-xs text-gray-400">登録番号 #{ fmt.Sprintf("%d", registration.ID) }</p>
-				</div>
-			</div>
-		</div>
-
-		<div class="mt-6 flex items-center justify-center gap-x-4">
+		<div class="mt-6 flex items-center justify-center gap-x-4 no-print">
 			if registration.Status == "registered" {
 				<form action={ templ.URL(fmt.Sprintf("/my/registrations/%d/cancel", registration.ID)) } method="POST" onsubmit="return confirm('この登録をキャンセルしてもよろしいですか？');">
 					@DangerButton("登録をキャンセル")
@@ -91,6 +23,145 @@ templ DigitalPass(event database.Event, registration database.Registration) {
 			}
 		</div>
 
-		@BackLink("参加登録一覧に戻る", "/my")
+		<div class="no-print">
+			@BackLink("参加登録一覧に戻る", "/my")
+		</div>
 	</div>
+}
+
+// festaPass renders a large, A4-optimized colorful ticket.
+templ festaPass(event database.Event, registration database.Registration) {
+	{{
+		eventFields := models.ParseCustomFields(event.CustomFields)
+		timeRange := models.GetCustomFieldValue(event.CustomFields, "時間帯")
+		subColor := models.GetCustomFieldValue(event.CustomFields, "サブカラー")
+		if subColor == "" {
+			subColor = "#f9fafb"
+		}
+	}}
+	<!-- Notice -->
+	<div class="border border-b-0 border-gray-200 bg-white px-8 py-6 text-sm text-gray-700 leading-relaxed">
+		<p>【完全ご予約制】ご入場の際、受付にてこの参加票をスマホ等の画面で、もしくはカラー出力した用紙を必ずご提示ください。ご提示がない場合はご入場いただけません。</p>
+	</div>
+
+	<!-- Main ticket -->
+	<div class="px-8 py-12 text-center border-x border-gray-200"
+		style={ fmt.Sprintf("background-color:%s;color:%s", event.ColorBg, event.ColorText) }>
+		<p class="text-base font-medium tracking-wider">【参加票】</p>
+		<h1 class="mt-4 text-6xl font-bold leading-tight">{ event.GroupName }</h1>
+		<h2 class="mt-6 text-3xl font-bold">{ event.Title }</h2>
+		if timeRange != "" {
+			<p class="mt-4 text-2xl font-semibold">{ event.EventDate.Format("1/2") }（{ weekdayJa(event.EventDate) }）{ timeRange }</p>
+		} else {
+			<p class="mt-4 text-2xl font-semibold">{ event.EventDate.Format("2006年1月2日 15:04") }</p>
+		}
+		<p class="mt-6 text-base">予約番号</p>
+		<p class="text-3xl font-bold">{ fmt.Sprintf("%d", registration.ID) }</p>
+	</div>
+
+	<!-- Sub info section -->
+	<div class="px-8 py-6 text-sm text-gray-700 leading-relaxed border-x border-gray-200"
+		style={ fmt.Sprintf("background-color:%s", subColor) }>
+		if event.Venue != "" {
+			<p class="font-medium">会場: { event.Venue }</p>
+		}
+		<p class="mt-1">参加者: <span class="font-semibold text-base">{ registration.Name }</span></p>
+		for _, f := range eventFields {
+			if f.Key != "時間帯" && f.Key != "サブカラー" && f.Key != "区分" {
+				<p class="mt-1">{ f.Key }: { f.Value }</p>
+			}
+		}
+	</div>
+
+	<!-- Footer -->
+	<div class="border border-t-0 border-gray-200 bg-white px-8 py-6 text-center text-sm text-gray-500">
+		<p>みなさまのご参加を心よりお待ち申し上げております。</p>
+		<p class="mt-1 font-medium text-gray-700">{ event.GroupName }</p>
+		if registration.Status != "registered" {
+			<div class="mt-3">
+				<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">キャンセル済み</span>
+			</div>
+		}
+	</div>
+}
+
+// defaultPass renders the standard card-style digital pass.
+templ defaultPass(event database.Event, registration database.Registration) {
+	<div class="rounded-2xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+		<!-- Header -->
+		<div class="px-6 py-4" style={ fmt.Sprintf("background-color:%s;color:%s", event.ColorBg, event.ColorText) }>
+			<p class="text-xs font-medium uppercase tracking-wider" style="opacity:0.7">イベントパス</p>
+			<h2 class="mt-1 text-xl font-bold">{ event.Title }</h2>
+		</div>
+
+		<!-- Body -->
+		<div class="px-6 py-6 space-y-4">
+			<div class="grid grid-cols-2 gap-4">
+				<div>
+					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">日時</p>
+					<p class="mt-1 text-sm font-medium text-gray-900">{ event.EventDate.Format("2006年1月2日") }</p>
+					<p class="text-sm text-gray-500">{ event.EventDate.Format("15:04") }</p>
+				</div>
+				<div>
+					<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">会場</p>
+					<p class="mt-1 text-sm font-medium text-gray-900">{ event.Venue }</p>
+				</div>
+			</div>
+
+			{{
+				eventFields := models.ParseCustomFields(event.CustomFields)
+			}}
+			if len(eventFields) > 0 {
+				<div class="border-t border-dashed border-gray-200 pt-4">
+					<div class="grid grid-cols-2 gap-4">
+						for _, f := range eventFields {
+							<div>
+								<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{ f.Key }</p>
+								<p class="mt-1 text-sm font-medium text-gray-900">{ f.Value }</p>
+							</div>
+						}
+					</div>
+				</div>
+			}
+			{{
+				regFields := models.ParseCustomFields(registration.CustomFields)
+			}}
+			if len(regFields) > 0 {
+				<div class="border-t border-dashed border-gray-200 pt-4">
+					<div class="grid grid-cols-2 gap-4">
+						for _, f := range regFields {
+							<div>
+								<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">{ f.Key }</p>
+								<p class="mt-1 text-sm font-medium text-gray-900">{ f.Value }</p>
+							</div>
+						}
+					</div>
+				</div>
+			}
+			<div class="border-t border-dashed border-gray-200 pt-4">
+				<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">参加者</p>
+				<p class="mt-1 text-lg font-semibold text-gray-900">{ registration.Name }</p>
+			</div>
+
+			<div class="border-t border-dashed border-gray-200 pt-4">
+				<p class="text-xs font-medium text-gray-500 uppercase tracking-wider">ステータス</p>
+				<div class="mt-1">
+					if registration.Status == "registered" {
+						<span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">確定</span>
+					} else {
+						<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10">キャンセル済み</span>
+					}
+				</div>
+			</div>
+
+			<div class="border-t border-gray-200 pt-4 text-center">
+				<p class="text-xs text-gray-400">登録番号 #{ fmt.Sprintf("%d", registration.ID) }</p>
+			</div>
+		</div>
+	</div>
+}
+
+func weekdayJa(t time.Time) string {
+	days := []string{"日", "月", "火", "水", "木", "金", "土"}
+	return days[t.Weekday()]
 }
