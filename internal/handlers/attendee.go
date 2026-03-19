@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -86,5 +85,5 @@ func (h *AttendeeHandler) CancelRegistration(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to cancel registration")
 	}
 
-	return c.Redirect(http.StatusSeeOther, fmt.Sprintf("/my/registrations/%d/pass", regID))
+	return c.Redirect(http.StatusSeeOther, "/my")
 }

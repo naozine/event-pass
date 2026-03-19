@@ -15,15 +15,7 @@ templ DigitalPass(event database.Event, registration database.Registration) {
 			@defaultPass(event, registration)
 		}
 
-		<div class="mt-6 flex items-center justify-center gap-x-4 no-print">
-			if registration.Status == "registered" {
-				<form action={ templ.URL(fmt.Sprintf("/my/registrations/%d/cancel", registration.ID)) } method="POST" onsubmit="return confirm('この登録をキャンセルしてもよろしいですか？');">
-					@DangerButton("登録をキャンセル")
-				</form>
-			}
-		</div>
-
-		<div class="no-print">
+		<div class="mt-6 no-print">
 			@BackLink("参加登録一覧に戻る", "/my")
 		</div>
 	</div>

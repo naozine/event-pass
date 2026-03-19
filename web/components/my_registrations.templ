@@ -33,6 +33,11 @@ templ MyRegistrations(registrations []database.ListRegistrationsByUserRow) {
 						</div>
 						<div class="mt-4 flex items-center gap-x-3">
 							@SecondaryLink("パスを表示", templ.URL(fmt.Sprintf("/my/registrations/%d/pass", r.ID)))
+							if r.Status == "registered" {
+								<form action={ templ.URL(fmt.Sprintf("/my/registrations/%d/cancel", r.ID)) } method="POST" onsubmit="return confirm('この登録をキャンセルしてもよろしいですか？');">
+									@DangerButton("キャンセル")
+								</form>
+							}
 						</div>
 					</div>
 				}
